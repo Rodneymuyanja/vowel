@@ -1,5 +1,4 @@
 ﻿
-
 namespace Vowel.vScanner
 {
     internal class TokenLocationInfo(int _line, int _column)

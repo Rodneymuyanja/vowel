@@ -1,2 +1,2 @@
 ### Vowel
-This is a small dynamically typed language
+This is a small dynamically typed language written in C#
