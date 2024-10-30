@@ -31,7 +31,7 @@ namespace Vowel.vScanner
 
         private void LoadKeywords()
         {
-            keywords.Add("and", TokenType.LOGICAL_AND);
+            keywords.Add("ne", TokenType.LOGICAL_AND);//and
             keywords.Add("class", TokenType.CLASS);
             keywords.Add("else", TokenType.ELSE);
             keywords.Add("false", TokenType.FALSE);
@@ -39,14 +39,14 @@ namespace Vowel.vScanner
             keywords.Add("func", TokenType.FUNC);
             keywords.Add("if", TokenType.IF);
             keywords.Add("nil", TokenType.NIL);
-            keywords.Add("or", TokenType.LOGICAL_OR);
-            keywords.Add("print", TokenType.PRINT);
+            keywords.Add("oba", TokenType.LOGICAL_OR);//or
+            keywords.Add("wandika", TokenType.PRINT);//wandika
             keywords.Add("return", TokenType.RETURN);
             keywords.Add("super", TokenType.BASE);
-            keywords.Add("this", TokenType.THIS);
+            keywords.Add("nze", TokenType.THIS);
             keywords.Add("true", TokenType.TRUE);
             keywords.Add("var", TokenType.VAR);
-            keywords.Add("while", TokenType.WHILE);
+            keywords.Add("albeit", TokenType.WHILE);
         }
 
         private void ScanTokens()
