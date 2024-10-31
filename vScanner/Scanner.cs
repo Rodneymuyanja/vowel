@@ -9,7 +9,7 @@ namespace Vowel.vScanner
         private int current_location = 0;
         private List<Token> tokens = [];
         private int line = 1;
-        //private int cursor = 0;
+        private int cursor = 1;
         private readonly Dictionary<string, TokenType> keywords = [];
 
         public Scanner(string _source_code)
@@ -40,7 +40,7 @@ namespace Vowel.vScanner
             keywords.Add("if", TokenType.IF);
             keywords.Add("nil", TokenType.NIL);
             keywords.Add("oba", TokenType.LOGICAL_OR);//or
-            keywords.Add("wandika", TokenType.PRINT);//wandika
+            keywords.Add("wandika", TokenType.PRINT);//print
             keywords.Add("return", TokenType.RETURN);
             keywords.Add("super", TokenType.BASE);
             keywords.Add("nze", TokenType.THIS);
@@ -55,15 +55,17 @@ namespace Vowel.vScanner
             switch (current_char)
             {
                 case '\n':
-                    line++;break;
+                    line++;
+                    cursor = 1;
+                    break;
                 case '(':
                     Add(TokenType.LEFT_PAREN);break;
                 case ')':
                     Add(TokenType.RIGHT_PAREN);break;
                 case '{':
-                    Add(TokenType.LEFT_PAREN);break;
+                    Add(TokenType.LEFT_BRACE);break;
                 case '}':
-                    Add(TokenType.RIGHT_PAREN);break;
+                    Add(TokenType.RIGHT_BRACE);break;
                 case '.':
                     Add(TokenType.DOT);break;
                 case '_':
@@ -81,13 +83,45 @@ namespace Vowel.vScanner
                 case ']':
                     Add(TokenType.RIGHT_SQUARE);break;
                 case '=':
-                    Add(Match('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL);break;
+                    if (Match('='))
+                    {
+                        AddSpecial(TokenType.EQUAL_EQUAL);
+                    }
+                    else
+                    {
+                        Add(TokenType.EQUAL);
+                    }
+                    break;
                 case '!':
-                    Add(Match('=') ? TokenType.BANG_EQUAL : TokenType.BANG);break;
+                    if (Match('='))
+                    {
+                        AddSpecial(TokenType.BANG_EQUAL);
+                    }
+                    else
+                    {
+                        Add(TokenType.BANG);
+                    }
+                    break;
                 case '>':
-                    Add(Match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER); break;
+                    if (Match('='))
+                    {
+                        AddSpecial(TokenType.GREATER_EQUAL);
+                    }
+                    else
+                    {
+                        Add(TokenType.GREATER);
+                    }
+                    break;
                 case '<':
-                    Add(Match('=') ? TokenType.LESS_EQUAL : TokenType.LESS); break;
+                    if (Match('='))
+                    {
+                        AddSpecial(TokenType.LESS_EQUAL);
+                    }
+                    else
+                    {
+                        Add(TokenType.LESS);
+                    }
+                    break;
                 case '+':
                     Add(TokenType.PLUS); break;
                 case '-':
@@ -101,6 +135,7 @@ namespace Vowel.vScanner
                 case '"':
                     ScanString();break;
                 case '\r':
+                case ' ':
                 case '\t':
                     //whitespace
                     break;
@@ -139,9 +174,20 @@ namespace Vowel.vScanner
             AddToken(token, lexeme.ToString(), null);
         }
 
+        private void AddSpecial(TokenType token)
+        {
+            //we trackback because Current() goes forward
+            char previous = TrackBack();
+            //move forward for the following character
+            //things like !=
+            char current = Current();
+            string lexeme = $"{previous}{current}";
+            AddToken(token, lexeme.ToString(), null);
+        }
+
         private void AddToken(TokenType token_type, string lexeme, object? literal)
         {
-            TokenLocationInfo location_info = new(current_location, line);
+            TokenLocationInfo location_info = new(line, cursor);
             Token token = new(token_type, lexeme, literal!, location_info);
 
             tokens.Add(token);
@@ -158,18 +204,29 @@ namespace Vowel.vScanner
                 || c >= 'A' && c <= 'Z';
         }
 
+        private static bool IsAlphaSpecial(char c)
+        {
+            return c >= 'a' && c <= 'z'
+                || c >= 'A' && c <= 'Z'
+                || c == ' ' || c == '_';
+        }
+
         private static bool IsAlphaNumeric(char c)
         {
             return IsDigit(c) || IsAlpha(c);
+        }
+
+        private static bool IsAlphaNumericSpecial(char c)
+        {
+            return IsDigit(c) || IsAlphaSpecial(c);
         }
 
         private bool Match(char expected)
         {
             if (EOF()) return false;
 
-            if (source_code[current_location] == expected) return true;
+            if (Peek() == expected) return true;
 
-            current_location++;
             return false;
         }
 
@@ -181,12 +238,13 @@ namespace Vowel.vScanner
         {
             //get the current token
             char c = source_code[current_location];
-            //move on
+
             MoveOn();
             return c;
         }
         private void MoveOn()
         {
+            cursor++;
             current_location++;
         }
 
@@ -197,7 +255,8 @@ namespace Vowel.vScanner
 
         private char TrackBack()
         {
-            return source_code[current_location--];
+            int track_back_offset = current_location;
+            return source_code[track_back_offset-1];
         }
 
         private void ScanComment()
@@ -214,8 +273,11 @@ namespace Vowel.vScanner
         private char Peek()
         {
             if (EOF()) return '\0';
+            int peek_offset = current_location;
 
-            return source_code[current_location++];
+            char c = source_code[peek_offset++];
+
+            return c;
         }
 
         private void ScanNumber()
@@ -278,7 +340,7 @@ namespace Vowel.vScanner
 
             void build_string()
             {
-                while (IsAlphaNumeric(Peek()))
+                while (IsAlphaNumericSpecial(Peek()))
                 {
                     sb.Append(Current());
                 }
@@ -286,6 +348,9 @@ namespace Vowel.vScanner
            
             build_string();
             string built_string = sb.ToString().Trim('"');
+
+            //this is because we've consumed that last '"'
+            MoveOn();
 
             AddToken(TokenType.STRING, built_string, built_string);
         }
