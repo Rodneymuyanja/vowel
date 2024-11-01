@@ -1,5 +1,4 @@
-﻿
-using System.Text;
+﻿using System.Text;
 
 namespace Vowel.vScanner
 {
@@ -73,7 +72,7 @@ namespace Vowel.vScanner
                 case '^':
                     Add(TokenType.CARET);break;
                 case '$':
-                    Add(TokenType.DOLLAR);break;
+                    Add(TokenType.SENTINEL);break;
                 case '&':
                     Add(TokenType.AMPERSAND);break;
                 case '%':
@@ -161,8 +160,14 @@ namespace Vowel.vScanner
                     {
                         ScanIdentifier();
                     }
+                    else
+                    {
+                        //this is an error "unexpected character"
+                        string message = $"Unexpected character '{current_char}' on line {line}, position {cursor}";
+                        Vowel.Error(message);
+                    }
 
-                    //this is an error "unexpected character"
+                    
                     break;
             }
         }

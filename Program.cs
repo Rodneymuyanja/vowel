@@ -1,5 +1,8 @@
 ﻿
 using System.Text;
+using Vowel.Nodes;
+using Vowel.Runtime;
+using Vowel.vParser;
 using Vowel.vScanner;
 
 Vowel.Vowel.Main();
@@ -8,6 +11,7 @@ namespace Vowel
 {
     public class Vowel
     {
+        private static bool had_error = false;
         public static void Main()
         {
             ReadVowelSource();
@@ -18,13 +22,66 @@ namespace Vowel
             string path = @"D:\notes2\voel.vowel";
             byte [] byte_array = File.ReadAllBytes(path);
             string content = Encoding.UTF8.GetString(byte_array);
-            ScanSourceCode(content);
+            var tokens = ScanSourceCode(content);
+            var expressions = ParseSource(tokens);
+
+            Interpret(expressions);
         }
 
-        private static void ScanSourceCode(string source_code)
+        private static List<Token> ScanSourceCode(string source_code)
         {
             Scanner scanner = new (source_code);
-            scanner.ScanSourceCode();
+            List<Token> tokens = scanner.ScanSourceCode();
+
+            if (had_error)
+            {
+                Environment.Exit(0);
+            }
+
+
+            return tokens;
+        }
+
+        private static List<Expr> ParseSource(List<Token> tokens)
+        {
+            Parser parser = new Parser(tokens);
+            var expressions = parser.Parse();
+
+            if (had_error)
+            {
+                Environment.Exit(0);
+            }
+
+            return expressions;
+        }
+
+        private static void Interpret(List<Expr> expressions)
+        {
+            Interpreter interpreter = new ();
+            interpreter.Interpret(expressions[0]);
+        }
+
+        public static void Error(string message) 
+        { 
+            had_error = true;
+            Report(message);
+        }
+
+        public static void Error(Token token, string message)
+        {
+            had_error = true;
+            Report(token, message);
+        }
+
+        private static void Report(Token token,string _message) 
+        {
+            string message = $"Error: [Line {token.location_info.line},Column {token.location_info.column}] : {_message}";
+            Console.WriteLine(message);
+        }
+
+        private static void Report(string message)
+        {
+            Console.WriteLine(message);
         }
     }
 }

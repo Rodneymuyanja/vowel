@@ -1,10 +1,10 @@
 ﻿
 namespace Vowel.vScanner
 {
-    internal enum TokenType
+    public enum TokenType
     {
         //singles
-        BANG,UNDER_SCORE,DOLLAR,CARET,AMPERSAND,
+        BANG,UNDER_SCORE,SENTINEL,CARET,AMPERSAND,
         LEFT_PAREN,RIGHT_PAREN,
         LEFT_BRACE,RIGHT_BRACE,COMMA,DOT,LEFT_SQUARE,RIGHT_SQUARE,
         SEMICOLON,
