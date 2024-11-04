@@ -9,6 +9,7 @@ namespace Vowel.Nodes
         public T VisitBinaryExpr(Expr.BinaryExpr expr);
         public T VisitGroupExpr(Expr.GroupExpr expr);
         public T VisitLiteralExpr(Expr.Literal expr);
+        public T VisitVariable(Expr.Variable expr);
     }
     public abstract class Expr
     {
@@ -50,6 +51,16 @@ namespace Vowel.Nodes
             public override T Accept<T>(IExprVisitor<T> visitor)
             {
                 return visitor.VisitLiteralExpr(this);
+            }
+        }
+
+        public class Variable(Token _variable) : Expr
+        {
+            public Token variable = _variable;
+
+            public override T Accept<T>(IExprVisitor<T> visitor)
+            {
+                return visitor.VisitVariable(this);
             }
         }
     }

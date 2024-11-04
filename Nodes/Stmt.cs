@@ -1,19 +1,44 @@
 ﻿
+using Vowel.vScanner;
+
 namespace Vowel.Nodes
 {
     public interface IStmtVisitor<T>
     {
-        public T VisitPrintStmt(Stmt.PrintStatement stmt);
+        public T VisitPrintStatement(Stmt.PrintStatement stmt);
+        public T VisitExpressionStatement(Stmt.ExpressionStatement stmt);
+        public T VisitVarStatement(Stmt.VarStatement stmt);
     }
     public abstract class Stmt
     {
         public abstract T Accept<T>(IStmtVisitor<T> visitor);
-        public class PrintStatement(object _printable): Stmt
+        public class PrintStatement(Expr _printable): Stmt
         {
-            public object printable = _printable;
+            public Expr printable = _printable;
             public override T Accept<T>(IStmtVisitor<T> visitor)
             {
-                return visitor.VisitPrintStmt(this);
+                return visitor.VisitPrintStatement(this);
+            }
+        }
+
+        public class ExpressionStatement(Expr _expression) : Stmt
+        {
+            public Expr expression = _expression;
+            public override T Accept<T>(IStmtVisitor<T> visitor)
+            {
+                return visitor.VisitExpressionStatement(this);
+            }
+        }
+
+        public class VarStatement(Token _keyword, Token _identifier, Expr _initializer): Stmt
+        {
+            public Token keyword = _keyword;
+            public Token identifier = _identifier;
+            public Expr initializer = _initializer;
+
+            public override T Accept<T>(IStmtVisitor<T> visitor)
+            {
+                return visitor.VisitVarStatement(this);
             }
         }
     }

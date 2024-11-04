@@ -19,10 +19,11 @@ namespace Vowel
 
         private static void ReadVowelSource()
         {
-            string path = @"D:\notes2\voel.vowel";
+            string path = @"C:\disk_d\Programming stuff\vowel_tests\vowel_test.vowel";
             byte [] byte_array = File.ReadAllBytes(path);
             string content = Encoding.UTF8.GetString(byte_array);
             var tokens = ScanSourceCode(content);
+
             var expressions = ParseSource(tokens);
 
             Interpret(expressions);
@@ -38,27 +39,26 @@ namespace Vowel
                 Environment.Exit(0);
             }
 
-
             return tokens;
         }
 
-        private static List<Expr> ParseSource(List<Token> tokens)
+        private static List<Stmt> ParseSource(List<Token> tokens)
         {
-            Parser parser = new Parser(tokens);
-            var expressions = parser.Parse();
+            Parser parser = new (tokens);
+            var statements = parser.Parse();
 
             if (had_error)
             {
                 Environment.Exit(0);
             }
 
-            return expressions;
+            return statements;
         }
 
-        private static void Interpret(List<Expr> expressions)
+        private static void Interpret(List<Stmt> statements)
         {
             Interpreter interpreter = new ();
-            interpreter.Interpret(expressions[0]);
+            interpreter.Interpret(statements);
         }
 
         public static void Error(string message) 

@@ -11,11 +11,19 @@ namespace Vowel.vParser
     ///         |                VOWEL GRAMMAR                |
     ///         |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|
     /// 
+    /// program         -> declaration* EOF;
+    /// declaration     -> varDeclaration
+    ///                    |statement;
+    /// varDeclaration  -> "var" IDENTIFIER ("=" expression)? ";";
+    /// statement       -> printStmt
+    ///                    |exprStmt;
+    /// exprStmt        -> expression ";";
+    /// printStmt       -> "wandika" expression ";";
     /// expression      -> equality;
     /// equality        -> comparison (("==" | "!=" ) comparison)*;
     /// comparison      -> term ((">" | ">=" | "<" | ">=") term)*;
     /// term            -> factor (("+" | "-") factor)*;
-    /// factor          -> unary (("*" | "/" | "%") unary)*;
+    /// factor          -> unary (("*" | "/" | "%" | "^") unary)*;
     /// unary           -> ("!"|"-") unary 
     ///                    | primary;
     /// primary         -> NUMBER | STRING | "false" | "true" | "nil"
@@ -26,14 +34,14 @@ namespace Vowel.vParser
         private readonly List<Token> tokens = _tokens;
         private int current = 0; 
 
-        public List<Expr> Parse()
+        public List<Stmt> Parse()
         {
-            List<Expr> expressions = [];
+            List<Stmt> statements = [];
             try
             {
                 while (!IsAtEnd())
                 {
-                    expressions.Add(Expression());
+                    statements.Add(Declaration());
                 }
             }
             catch (VowelError v_error)
@@ -41,15 +49,53 @@ namespace Vowel.vParser
                 Vowel.Error(v_error.token, v_error.message);
             }
 
-            return expressions;
+            return statements;
         }
 
-        private void Statement()
+        public Stmt Declaration()
         {
-
+            if (Match([TokenType.VAR])) return VarDeclaration();
+            return Statement();
         }
 
-        public Expr Expression()
+        /// varDeclaration  -> "var" IDENTIFIER ("=" expression)? ";";
+        private Stmt VarDeclaration()
+        {
+            Token keyword = TrackBack();
+            Token identifier = Consume(TokenType.IDENTIFIER, "Expected variable name after 'var' keyword");
+            Expr initializer = null!;
+
+            if (Match([TokenType.EQUAL]))
+            {
+                initializer = Expression();
+            }
+
+            Consume(TokenType.SEMICOLON, "Expected ';' after variable declaration");
+
+            return new Stmt.VarStatement(keyword, identifier, initializer);
+        }
+
+        private Stmt Statement()
+        {
+            if (Match([TokenType.PRINT])) return PrintStatement();
+            return ExpressionStatement();
+        }
+
+        /// exprStmt        -> expression ";";
+        private Stmt ExpressionStatement()
+        {
+            Expr expression = Expression();
+            Consume(TokenType.SEMICOLON, "Expected ';' at end of statement");
+            return new Stmt.ExpressionStatement(expression);
+        } 
+        /// printStmt       -> "wandika" expression ";";
+        private Stmt PrintStatement()
+        {
+            Expr expression = Expression();
+            Consume(TokenType.SEMICOLON, "Expected ';' at end of statement");
+            return new Stmt.PrintStatement(expression);
+        }
+        private Expr Expression()
         {
             Expr expr = Equality();
             return expr;
@@ -140,7 +186,11 @@ namespace Vowel.vParser
             if (Match([TokenType.FALSE])) return new Expr.Literal("false");
             if (Match([TokenType.TRUE])) return new Expr.Literal("true");
             if (Match([TokenType.NIL])) return new Expr.Literal("nil");
-            if (Match([TokenType.IDENTIFIER])) return new Expr.Literal(literal);
+
+            if (Match([TokenType.IDENTIFIER]))
+            {
+                return new Expr.Variable(TrackBack());
+            }
 
             if (Match([TokenType.LEFT_PAREN])) return Grouping();
 

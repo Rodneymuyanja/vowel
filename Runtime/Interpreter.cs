@@ -4,11 +4,23 @@ using Vowel.vScanner;
 
 namespace Vowel.Runtime
 {
-    internal class Interpreter : IExprVisitor<object>
+    public partial class Interpreter : IExprVisitor<object>, IStmtVisitor<object>
     {
-        public void Interpret(Expr expr) 
+        //this is the global environment so we have no enclosing env
+        private readonly VowelEnvironment env = new (null!);
+        public void Interpret(List<Stmt> statements) 
         {
-            var result = Evaluate(expr);
+            try
+            {
+                foreach (var statement in statements)
+                {
+                    Evaluate(statement);
+                }
+            }
+            catch (RuntimeError)
+            {
+                throw;
+            }
         }
 
         public object VisitBinaryExpr(Expr.BinaryExpr expr)
@@ -103,11 +115,47 @@ namespace Vowel.Runtime
                     {
                         throw new RuntimeError($"unary operand must be double");
                     }
-                    return (double)operand;
+                    return -(double)operand;
                 case TokenType.BANG:
+                    return !IsTruthy(operand);
                 default:
                     throw new RuntimeError("Unknown operator");
             }
+        }
+
+        public object VisitVariable(Expr.Variable expr)
+        {
+            return env.Get(expr.variable.lexeme);
+        }
+        
+        public object VisitExpressionStatement(Stmt.ExpressionStatement stmt)
+        {
+            return Evaluate(stmt.expression);
+        }
+
+        public object VisitPrintStatement(Stmt.PrintStatement stmt)
+        {
+            object expression = Evaluate(stmt.printable);
+            Console.WriteLine(expression.ToString());
+            return null!;
+        }
+
+        //this a variable declaration
+        public object VisitVarStatement(Stmt.VarStatement stmt)
+        {
+         //    Token keyword = _keyword;
+         //Token identifier = _identifier;
+         //Expr initializer = _initializer;
+
+            string identifier_lexeme = stmt.identifier.lexeme;
+            object initializer = null!;
+            if(stmt.initializer is not null)
+            {
+                initializer = Evaluate(stmt.initializer);
+            }
+
+            env.Define(identifier_lexeme, initializer);
+            return null!;
         }
 
         //this is our bread and butt--uhhh
@@ -116,149 +164,10 @@ namespace Vowel.Runtime
             return expression.Accept(this);
         }
 
-        private static void CheckForDouble(object left, object right, Token _operator)
+        private object Evaluate(Stmt statement)
         {
-            if(left is not double)
-            {
-                throw new RuntimeError($"{_operator.lexeme} requires left value to be type 'double' but found {left}");
-            }
-
-            if (right is not double)
-            {
-                throw new RuntimeError($"{_operator.lexeme} requires right value to be type 'double' but found {right}");
-            }
+            return statement.Accept(this);
         }
 
-        private static double Power(double value,double power)
-        {
-            if (power == 0) return 1;
-
-            return value * Power(value, power - 1);
-        }
-        private static bool IsEqual(object left, object right)
-        {
-            if (right is null && left is null) return true;
-            if(left is null) return false;
-            return left.Equals(right);
-        }
-
-        private bool IsTruthy(object value)
-        {
-            if(value is null) return false;
-
-            if(value is bool v)
-            {
-                return v;
-            }
-
-            return true;
-        }
-
-        private bool Compare(object left, object right, TokenType token_type)
-        {
-            if(left  == null || right == null) return false;
-
-            switch (token_type)
-            {
-                case TokenType.GREATER:
-                    if (left is double && right is double)
-                    {
-                        return (double)left > (double)right;
-                    }
-
-                    //this implies that comparing strings and numbers is allowed
-                    //for example "class string" > 4 would be true
-
-                    //strange and could be a source of bugs
-                    if (left is string && right is double)
-                    {
-                        return left.ToString()!.Length > (double)right;
-                    }
-
-                    if (left is double && right is string)
-                    {
-                        return (double)left > right.ToString()!.Length;
-                    }
-
-                    if (left is string && right is string)
-                    {
-                        return left.ToString()!.Length > right.ToString()!.Length;
-                    }
-
-
-                    break;
-                case TokenType.GREATER_EQUAL:
-                    if (left is double && right is double)
-                    {
-                        return (double)left >= (double)right;
-                    }
-
-                    if (left is string && right is double)
-                    {
-                        return  left.ToString()!.Length >= (double)right;
-                    }
-
-                    if (left is double  && right is string)
-                    {
-                        return (double)left >= right.ToString()!.Length;
-                    }
-
-                    if (left is string && right is string )
-                    {
-                        return left.ToString()!.Length >= right.ToString()!.Length;
-                    }
-
-                    break;
-                case TokenType.LESS:
-                    if (left is double && right is double)
-                    {
-                        return (double)left < (double)right;
-                    }
-
-                    if (left is string && right is double)
-                    {
-                        return left.ToString()!.Length < (double)right;
-                    }
-
-                    if (left is double && right is string)
-                    {
-                        return (double)left < right.ToString()!.Length;
-                    }
-
-                    if (left is string && right is string)
-                    {
-                        return left.ToString()!.Length < right.ToString()!.Length;
-                    }
-
-                    break;
-                case TokenType.LESS_EQUAL:
-                    if (left is double && right is double)
-                    {
-                        return (double)left <= (double)right;
-                    }
-
-                    if (left is string && right is double)
-                    {
-                        return left.ToString()!.Length <= (double)right;
-                    }
-
-                    if (left is double && right is string)
-                    {
-                        return (double)left <= right.ToString()!.Length;
-                    }
-
-                    if (left is string && right is string)
-                    {
-                        return left.ToString()!.Length <= right.ToString()!.Length;
-                    }
-
-                    break;
-
-                default:
-                    return false;
-            }
-
-            return false;
-        }
     }
 }
