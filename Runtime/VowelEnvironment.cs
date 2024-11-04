@@ -1,4 +1,6 @@
 ﻿
+using Vowel.Errors;
+
 namespace Vowel.Runtime
 {
     public class VowelEnvironment(VowelEnvironment closure)
@@ -23,7 +25,29 @@ namespace Vowel.Runtime
                 return obj;
             }
 
-            return null!;
+            if(enclosing_env is not null)
+            {
+                return enclosing_env.Get(variable);
+            }
+
+            throw new RuntimeError($"Undefined variable '{variable}'");
+        }
+
+        public void Assign(string variable, object obj)
+        {
+            if (env_variables.ContainsKey(variable))
+            {
+                env_variables[variable] = obj;
+                return;
+            }
+
+            if(enclosing_env is not null)
+            {
+                enclosing_env.Assign(variable, obj); 
+                return;
+            }
+
+            throw new RuntimeError($"Undefined variable {variable}");
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿
-
-using Vowel.Errors;
+﻿using Vowel.Errors;
 using Vowel.vScanner;
 
 namespace Vowel.Runtime

@@ -7,7 +7,7 @@ namespace Vowel.Runtime
     public partial class Interpreter : IExprVisitor<object>, IStmtVisitor<object>
     {
         //this is the global environment so we have no enclosing env
-        private readonly VowelEnvironment env = new (null!);
+        private VowelEnvironment env = new (null!);
         public void Interpret(List<Stmt> statements) 
         {
             try
@@ -143,10 +143,6 @@ namespace Vowel.Runtime
         //this a variable declaration
         public object VisitVarStatement(Stmt.VarStatement stmt)
         {
-         //    Token keyword = _keyword;
-         //Token identifier = _identifier;
-         //Expr initializer = _initializer;
-
             string identifier_lexeme = stmt.identifier.lexeme;
             object initializer = null!;
             if(stmt.initializer is not null)
@@ -155,6 +151,39 @@ namespace Vowel.Runtime
             }
 
             env.Define(identifier_lexeme, initializer);
+            return null!;
+        }
+
+    
+
+        public object VisitAssignStatement(Expr.AssignStatement expr)
+        {
+            object value = Evaluate(expr.assignment_target);
+            env.Assign(expr.name.lexeme, value);
+            return null!;
+        }
+
+        public object VisitBlockStatement(Stmt.BlockStatement stmt)
+        {
+            //executing a block introduces a new scope
+            //atleast according to lexical scoping
+            VowelEnvironment current_environment = new (env);
+            VowelEnvironment previous_environment = env;
+            env = current_environment;
+
+            try
+            {
+                foreach (var statement in stmt.statements)
+                {
+                    Evaluate(statement);
+                }
+            }
+            finally
+            {
+                //restore the previous environment
+                env = previous_environment;
+            }
+          
             return null!;
         }
 
@@ -168,6 +197,5 @@ namespace Vowel.Runtime
         {
             return statement.Accept(this);
         }
-
     }
 }

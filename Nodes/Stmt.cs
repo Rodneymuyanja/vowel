@@ -8,6 +8,7 @@ namespace Vowel.Nodes
         public T VisitPrintStatement(Stmt.PrintStatement stmt);
         public T VisitExpressionStatement(Stmt.ExpressionStatement stmt);
         public T VisitVarStatement(Stmt.VarStatement stmt);
+        public T VisitBlockStatement(Stmt.BlockStatement stmt);
     }
     public abstract class Stmt
     {
@@ -39,6 +40,15 @@ namespace Vowel.Nodes
             public override T Accept<T>(IStmtVisitor<T> visitor)
             {
                 return visitor.VisitVarStatement(this);
+            }
+        }
+
+        public class BlockStatement(List<Stmt> _statements) :Stmt
+        {
+            public List<Stmt> statements = _statements;
+            public override T Accept<T>(IStmtVisitor<T> visitor)
+            {
+                return visitor.VisitBlockStatement(this);
             }
         }
     }

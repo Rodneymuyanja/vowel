@@ -12,14 +12,17 @@ namespace Vowel.vParser
     ///         |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|
     /// 
     /// program         -> declaration* EOF;
+    /// block           -> "{" declaration* "}"
     /// declaration     -> varDeclaration
     ///                    |statement;
     /// varDeclaration  -> "var" IDENTIFIER ("=" expression)? ";";
     /// statement       -> printStmt
-    ///                    |exprStmt;
+    ///                    | exprStmt
+    ///                    | block;
     /// exprStmt        -> expression ";";
     /// printStmt       -> "wandika" expression ";";
-    /// expression      -> equality;
+    /// expression      -> IDENTIFIER "=" expression
+    ///                    | equality;
     /// equality        -> comparison (("==" | "!=" ) comparison)*;
     /// comparison      -> term ((">" | ">=" | "<" | ">=") term)*;
     /// term            -> factor (("+" | "-") factor)*;
@@ -55,7 +58,21 @@ namespace Vowel.vParser
         public Stmt Declaration()
         {
             if (Match([TokenType.VAR])) return VarDeclaration();
+            
             return Statement();
+        }
+
+        private Stmt Block()
+        {
+            List<Stmt> statements = [];
+            while (!IsAtEnd() && !Check(TokenType.RIGHT_BRACE))
+            {
+                statements.Add(Declaration());
+            }
+
+            Consume(TokenType.RIGHT_BRACE, "Expected '}' at the end of a block");
+
+            return new Stmt.BlockStatement(statements);
         }
 
         /// varDeclaration  -> "var" IDENTIFIER ("=" expression)? ";";
@@ -78,6 +95,7 @@ namespace Vowel.vParser
         private Stmt Statement()
         {
             if (Match([TokenType.PRINT])) return PrintStatement();
+            if (Match([TokenType.LEFT_BRACE])) return Block();
             return ExpressionStatement();
         }
 
@@ -97,7 +115,27 @@ namespace Vowel.vParser
         }
         private Expr Expression()
         {
+            return Assignment();
+        }
+
+        /// expression      -> IDENTIFIER "=" expression
+        ///                    | equality;
+        private Expr Assignment()
+        {
             Expr expr = Equality();
+            if (Match([TokenType.EQUAL]))
+            {
+                Token equals_symbol = TrackBack();
+                Expr value = Assignment();
+
+                if (expr is Expr.Variable variable) {
+                    Token target = variable.variable;
+                    return new Expr.AssignStatement(target, value);
+                }
+
+                throw new VowelError(equals_symbol, "Token requires target to be a variable");
+            }
+
             return expr;
         }
         /// equality        -> comparison (("==" | "!=" ) comparison)*;

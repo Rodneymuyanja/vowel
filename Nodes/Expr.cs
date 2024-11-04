@@ -10,6 +10,7 @@ namespace Vowel.Nodes
         public T VisitGroupExpr(Expr.GroupExpr expr);
         public T VisitLiteralExpr(Expr.Literal expr);
         public T VisitVariable(Expr.Variable expr);
+        public T VisitAssignStatement(Expr.AssignStatement stmt);
     }
     public abstract class Expr
     {
@@ -61,6 +62,16 @@ namespace Vowel.Nodes
             public override T Accept<T>(IExprVisitor<T> visitor)
             {
                 return visitor.VisitVariable(this);
+            }
+        }
+
+        public class AssignStatement(Token _name, Expr _assignment_target) : Expr
+        {
+            public Token name = _name;
+            public Expr assignment_target = _assignment_target;
+            public override T Accept<T>(IExprVisitor<T> visitor)
+            {
+                return visitor.VisitAssignStatement(this);
             }
         }
     }
