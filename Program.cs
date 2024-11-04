@@ -12,6 +12,7 @@ namespace Vowel
     public class Vowel
     {
         private static bool had_error = false;
+        public const object NULL = null!;
         public static void Main()
         {
             ReadVowelSource();

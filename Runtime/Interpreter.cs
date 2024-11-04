@@ -8,6 +8,12 @@ namespace Vowel.Runtime
     {
         //this is the global environment so we have no enclosing env
         private VowelEnvironment env = new (null!);
+        private Dictionary<Expr, Int32> local_variables = [];
+
+        public void ResolveLocalVariable(Expr expr, Int32 scope_distance)
+        {
+            local_variables.Add(expr, scope_distance);
+        }
         public void Interpret(List<Stmt> statements) 
         {
             try
