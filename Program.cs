@@ -1,6 +1,7 @@
 ﻿
 using System.Text;
 using Vowel.Nodes;
+using Vowel.Passes;
 using Vowel.Runtime;
 using Vowel.vParser;
 using Vowel.vScanner;
@@ -12,7 +13,7 @@ namespace Vowel
     public class Vowel
     {
         private static bool had_error = false;
-        public const object NULL = null!;
+        public const object NIL = null!;
         public static void Main()
         {
             ReadVowelSource();
@@ -60,6 +61,11 @@ namespace Vowel
         private static void Interpret(List<Stmt> statements)
         {
             Interpreter interpreter = new ();
+
+            Resolver resolver = new (interpreter);
+
+            resolver.Resolve(statements);
+
             interpreter.Interpret(statements);
         }
 

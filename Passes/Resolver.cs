@@ -6,19 +6,109 @@ using Vowel.vScanner;
 
 namespace Vowel.Passes
 {
-    internal class Resolver: IExprVisitor<object>,IStmtVisitor<object>
+    internal class Resolver(Interpreter _vowel_interpreter): IExprVisitor<object>,IStmtVisitor<object>
     {
         private Stack<Dictionary<string, bool>> scopes = new ();
-        private readonly Interpreter vowel_interpreter = new();
+        private readonly Interpreter vowel_interpreter = _vowel_interpreter;
+        private Dictionary<string, Expr> local_vars = [];
+
+        public void Resolve(List<Stmt> statements)
+        {
+            foreach (var statment in statements)
+            {
+                Resolve(statment);
+            }
+        }
+
+        public object VisitAssignStatement(Expr.AssignStatement expr)
+        {
+            Resolve(expr.assignment_target);
+            ResolveLocalVariableToInterpreter(expr, expr.name);
+            return Vowel.NIL;
+        }
+
+        public object VisitBinaryExpr(Expr.BinaryExpr expr)
+        {
+            Resolve(expr.left);
+            Resolve(expr.right);
+            return Vowel.NIL;
+        }
+
+        public object VisitBlockStatement(Stmt.BlockStatement stmt)
+        {
+            BeginScope();
+            foreach (var statement in stmt.statements)
+            {
+                Resolve(statement);
+            }
+            EndScope();
+            return Vowel.NIL;
+        }
+
+        public object VisitExpressionStatement(Stmt.ExpressionStatement stmt)
+        {
+            Resolve(stmt.expression);
+            return Vowel.NIL;
+        }
+
+        public object VisitGroupExpr(Expr.GroupExpr expr)
+        {
+            Resolve(expr.expression);
+            return Vowel.NIL;
+        }
+
+        public object VisitLiteralExpr(Expr.Literal expr)
+        {
+            return Vowel.NIL;
+        }
+
+        public object VisitPrintStatement(Stmt.PrintStatement stmt)
+        {
+            Resolve(stmt.printable);
+            return Vowel.NIL;
+        }
+
+        public object VisitUnaryExpr(Expr.UnaryExpr expr)
+        {
+            Resolve(expr.operand);
+            return Vowel.NIL;
+        }
+
+        public object VisitVariable(Expr.Variable expr)
+        {
+            //the assumption is this a global variable
+            if (scopes.Count == 0) return Vowel.NIL;
+            //go tell the interpreter where to find it
+            ResolveLocalVariableToInterpreter(expr, expr.variable);
+
+            return Vowel.NIL;
+        }
+
+        public object VisitVarStatement(Stmt.VarStatement stmt)
+        {
+            Declare(stmt.identifier);
+
+            if (stmt.initializer is not null)
+            {
+                Resolve(stmt.initializer);
+            }
+
+            Define(stmt.identifier);
+
+            return Vowel.NIL;
+        }
+
         private void Declare(Token name)
         {
-            if (scopes.Count > 0) return;
+            if (scopes.Count == 0) return;
 
             var scope = scopes.Peek();
-            scope.Add(name.lexeme,false);
+            scope.Add(name.lexeme, false);
         }
         private void Define(Token name)
         {
+            if (scopes.Count == 0) return;
+
             var scope = scopes.Peek();
             if (!scope.ContainsKey(name.lexeme))
             {
@@ -33,7 +123,7 @@ namespace Vowel.Passes
             expr.Accept(this);
         }
 
-        private void Resolve(Stmt stmt) 
+        private void Resolve(Stmt stmt)
         {
             stmt.Accept(this);
         }
@@ -43,99 +133,26 @@ namespace Vowel.Passes
             Dictionary<string, bool> scope = [];
             scopes.Push(scope);
         }
-        private void EndScope() 
+        private void EndScope()
         {
-            scopes.Pop();
+            //scopes.Pop();
         }
 
-        private void ResolveLocalVariableToInterpreter(Expr expr)
+        private void ResolveLocalVariableToInterpreter(Expr expr, Token name)
         {
             int scopes_size = scopes.Count;
-            //we need to stop on top
+            //we need to start on top
             //the inner most scope
-            for (int i = scopes_size; i >=0; i--)
+            for (int i = scopes_size - 1; i >= 0; i--)
             {
-                var scope = scopes.
-            }
-        }
-
-        public object VisitAssignStatement(Expr.AssignStatement stmt)
-        {
-            Resolve(stmt.assignment_target);
-            return Vowel.NULL;
-        }
-
-        public object VisitBinaryExpr(Expr.BinaryExpr expr)
-        {
-            Resolve(expr.left);
-            Resolve(expr.right);
-            return Vowel.NULL;
-        }
-
-        public object VisitBlockStatement(Stmt.BlockStatement stmt)
-        {
-            BeginScope();
-            foreach (var statement in stmt.statements)
-            {
-                Resolve(statement);
-            }
-            EndScope();
-            return Vowel.NULL;
-        }
-
-        public object VisitExpressionStatement(Stmt.ExpressionStatement stmt)
-        {
-            Resolve(stmt.expression);
-            return Vowel.NULL;
-        }
-
-        public object VisitGroupExpr(Expr.GroupExpr expr)
-        {
-            Resolve(expr.expression);
-            return Vowel.NULL;
-        }
-
-        public object VisitLiteralExpr(Expr.Literal expr)
-        {
-            return Vowel.NULL;
-        }
-
-        public object VisitPrintStatement(Stmt.PrintStatement stmt)
-        {
-            Resolve(stmt.printable);
-            return Vowel.NULL;
-        }
-
-        public object VisitUnaryExpr(Expr.UnaryExpr expr)
-        {
-            Resolve(expr.operand);
-            return Vowel.NULL;
-        }
-
-        public object VisitVariable(Expr.Variable expr)
-        {
-            //the assumption is this a global variable
-            if (scopes.Count == 0) return Vowel.NULL;
-
-            var scope = scopes.Peek();
-            var found = scope[expr.variable.lexeme];
-
-            if (!found) throw new VowelError(expr.variable, $"Undefined variable '{expr.variable.lexeme}' .");
-
-        }
-
-        public object VisitVarStatement(Stmt.VarStatement stmt)
-        {
-            BeginScope();
-            Declare(stmt.identifier);
-
-            if (stmt.initializer is not null)
-            {
-                Resolve(stmt.initializer);
+                var scope = scopes.ElementAt(i);
+                if (scope.ContainsKey(name.lexeme))
+                {
+                    vowel_interpreter.ResolveLocalVariable(expr, i);
+                    return;
+                }
             }
 
-            Define(stmt.identifier);
-            return Vowel.NULL;
         }
     }
 }

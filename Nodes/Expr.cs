@@ -58,6 +58,7 @@ namespace Vowel.Nodes
         public class Variable(Token _variable) : Expr
         {
             public Token variable = _variable;
+            public string runtime_identifier = "";
 
             public override T Accept<T>(IExprVisitor<T> visitor)
             {

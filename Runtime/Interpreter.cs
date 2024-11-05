@@ -7,12 +7,19 @@ namespace Vowel.Runtime
     public partial class Interpreter : IExprVisitor<object>, IStmtVisitor<object>
     {
         //this is the global environment so we have no enclosing env
+        //so it contains the global variables
         private VowelEnvironment env = new (null!);
         private Dictionary<Expr, Int32> local_variables = [];
+        private Dictionary<string, Expr> local_vars = [];
 
         public void ResolveLocalVariable(Expr expr, Int32 scope_distance)
         {
             local_variables.Add(expr, scope_distance);
+        }
+
+        public void ResolveLocalVariable(string identifier, Expr expr)
+        {
+            local_vars.Add(identifier,expr);
         }
         public void Interpret(List<Stmt> statements) 
         {
@@ -131,6 +138,11 @@ namespace Vowel.Runtime
 
         public object VisitVariable(Expr.Variable expr)
         {
+            if(local_variables.TryGetValue(expr, out int distance))
+            {
+                return env.GetVariableAt(expr.variable.lexeme, distance);
+            }
+
             return env.Get(expr.variable.lexeme);
         }
         
@@ -143,30 +155,38 @@ namespace Vowel.Runtime
         {
             object expression = Evaluate(stmt.printable);
             Console.WriteLine(expression.ToString());
-            return null!;
+            return Vowel.NIL;
         }
 
         //this a variable declaration
         public object VisitVarStatement(Stmt.VarStatement stmt)
         {
             string identifier_lexeme = stmt.identifier.lexeme;
-            object initializer = null!;
+            object initializer = Vowel.NIL;
+
             if(stmt.initializer is not null)
             {
                 initializer = Evaluate(stmt.initializer);
             }
 
             env.Define(identifier_lexeme, initializer);
-            return null!;
+            return Vowel.NIL;
         }
-
-    
 
         public object VisitAssignStatement(Expr.AssignStatement expr)
         {
             object value = Evaluate(expr.assignment_target);
-            env.Assign(expr.name.lexeme, value);
-            return null!;
+
+            if(local_variables.TryGetValue(expr, out int distance))
+            {
+                env.AssignVariableAt(expr.name.lexeme,value,distance);
+            }
+            else
+            {
+                env.Assign(expr.name.lexeme, value);
+            }
+           
+            return Vowel.NIL;
         }
 
         public object VisitBlockStatement(Stmt.BlockStatement stmt)
@@ -190,7 +210,7 @@ namespace Vowel.Runtime
                 env = previous_environment;
             }
           
-            return null!;
+            return Vowel.NIL;
         }
 
         //this is our bread and butt--uhhh
