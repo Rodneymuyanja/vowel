@@ -11,6 +11,7 @@ namespace Vowel.Nodes
         public T VisitLiteralExpr(Expr.Literal expr);
         public T VisitVariable(Expr.Variable expr);
         public T VisitAssignStatement(Expr.AssignStatement stmt);
+        public T VisitLogicalExpr(Expr.Logical expr);
     }
     public abstract class Expr
     {
@@ -66,6 +67,8 @@ namespace Vowel.Nodes
             }
         }
 
+        //this is in here because it's slips just between an expression
+        //and equality..
         public class AssignStatement(Token _name, Expr _assignment_target) : Expr
         {
             public Token name = _name;
@@ -73,6 +76,17 @@ namespace Vowel.Nodes
             public override T Accept<T>(IExprVisitor<T> visitor)
             {
                 return visitor.VisitAssignStatement(this);
+            }
+        }
+
+        public class Logical(Expr _left, Token _operator, Expr _right) : Expr
+        {
+            public Expr left = _left;
+            public Token _operator = _operator;
+            public Expr right = _right;
+            public override T Accept<T>(IExprVisitor<T> visitor)
+            {
+                return visitor.VisitLogicalExpr(this);
             }
         }
     }

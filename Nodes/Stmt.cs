@@ -9,6 +9,7 @@ namespace Vowel.Nodes
         public T VisitExpressionStatement(Stmt.ExpressionStatement stmt);
         public T VisitVarStatement(Stmt.VarStatement stmt);
         public T VisitBlockStatement(Stmt.BlockStatement stmt);
+        public T VisitIfStatement(Stmt.IFStatement stmt);   
     }
     public abstract class Stmt
     {
@@ -50,6 +51,17 @@ namespace Vowel.Nodes
             public override T Accept<T>(IStmtVisitor<T> visitor)
             {
                 return visitor.VisitBlockStatement(this);
+            }
+        }
+
+        public class IFStatement(Expr _condition, Stmt _then_branch, Stmt _else_branch): Stmt
+        {
+            public Expr condition = _condition;
+            public Stmt then_branch = _then_branch;
+            public Stmt else_branch = _else_branch;
+            public override T Accept<T>(IStmtVisitor<T> visitor)
+            {
+                return visitor.VisitIfStatement(this);
             }
         }
     }

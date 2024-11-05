@@ -17,12 +17,18 @@ namespace Vowel.vParser
     ///                    |statement;
     /// varDeclaration  -> "var" IDENTIFIER ("=" expression)? ";";
     /// statement       -> printStmt
+    ///                    | ifstmt
     ///                    | exprStmt
     ///                    | block;
     /// exprStmt        -> expression ";";
     /// printStmt       -> "wandika" expression ";";
-    /// expression      -> IDENTIFIER "=" expression
-    ///                    | equality;
+    /// ifstmt          -> "if" "(" expression ")" statement
+    ///                     ("else" statement);
+    /// expression      -> assignment;
+    /// assignment      -> IDENTIFIER "=" expression
+    ///                    | logical_or;
+    /// logical_or      -> logical_and ( "oba" logical_and)*;
+    /// logical_and     -> equality ( "oba" equality)*;
     /// equality        -> comparison (("==" | "!=" ) comparison)*;
     /// comparison      -> term ((">" | ">=" | "<" | ">=") term)*;
     /// term            -> factor (("+" | "-") factor)*;
@@ -96,6 +102,7 @@ namespace Vowel.vParser
         {
             if (Match([TokenType.PRINT])) return PrintStatement();
             if (Match([TokenType.LEFT_BRACE])) return Block();
+            if (Match([TokenType.IF])) return IfStatement();
             return ExpressionStatement();
         }
 
@@ -113,6 +120,24 @@ namespace Vowel.vParser
             Consume(TokenType.SEMICOLON, "Expected ';' at end of statement");
             return new Stmt.PrintStatement(expression);
         }
+
+        /// ifstmt          -> "if" "(" expression ")" statement
+        ///                     ("else" statement);
+        private Stmt IfStatement()
+        {
+            Consume(TokenType.LEFT_PAREN, "Expected '(' after if");
+            Expr condition = Expression();
+            Consume(TokenType.RIGHT_PAREN, "Expected ')' after condition");
+            Stmt then_branch = Statement();
+            Stmt else_branch = null!;
+
+            if (Match([TokenType.ELSE]))
+            {
+                else_branch = Statement();
+            }
+
+            return new Stmt.IFStatement(condition, then_branch, else_branch);
+        }
         private Expr Expression()
         {
             return Assignment();
@@ -122,7 +147,7 @@ namespace Vowel.vParser
         ///                    | equality;
         private Expr Assignment()
         {
-            Expr expr = Equality();
+            Expr expr = Oba();
             if (Match([TokenType.EQUAL]))
             {
                 Token equals_symbol = TrackBack();
@@ -138,6 +163,38 @@ namespace Vowel.vParser
 
             return expr;
         }
+
+        /// logical_and     -> equality ( "oba" equality)*; <summary>
+        /// 'oba' is literally luganda for 'or'
+        private Expr Oba()
+        {
+            Expr expr = Ne();
+            while (Match([TokenType.LOGICAL_AND]))
+            {
+                Token _operator = TrackBack();
+                Expr right = Ne();
+                return new Expr.Logical(expr, _operator, right);
+            }
+
+            return expr;
+        }
+
+        /// logical_and     -> equality ( "oba" equality)*; <summary>
+        /// 'ne' is literally luganda for 'and'
+        private Expr Ne()
+        {
+            Expr expr = Equality();
+            while (Match([TokenType.LOGICAL_AND])) 
+            {
+                Token _operator = TrackBack();
+                Expr right = Equality();
+                return new Expr.Logical(expr, _operator, right);    
+            }
+
+            return expr;
+        }
+
+
         /// equality        -> comparison (("==" | "!=" ) comparison)*;
         private Expr Equality()
         {

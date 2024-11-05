@@ -66,6 +66,11 @@ namespace Vowel
 
             resolver.Resolve(statements);
 
+            if (had_error)
+            {
+                Environment.Exit(0);
+            }
+
             interpreter.Interpret(statements);
         }
 

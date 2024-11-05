@@ -14,11 +14,25 @@ namespace Vowel.Passes
 
         public void Resolve(List<Stmt> statements)
         {
-            foreach (var statment in statements)
+            try
             {
-                Resolve(statment);
+                foreach (var statment in statements)
+                {
+                    Resolve(statment);
+                }
             }
+            catch(VowelError v)
+            {
+                Vowel.Error(v.token, v.message);    
+            }
+            finally 
+            {
+                CleanUp();
+            }
+            
         }
+
+       
 
         public object VisitAssignStatement(Expr.AssignStatement expr)
         {
@@ -41,7 +55,7 @@ namespace Vowel.Passes
             {
                 Resolve(statement);
             }
-            EndScope();
+
             return Vowel.NIL;
         }
 
@@ -133,11 +147,7 @@ namespace Vowel.Passes
             Dictionary<string, bool> scope = [];
             scopes.Push(scope);
         }
-        private void EndScope()
-        {
-            //scopes.Pop();
-        }
-
+     
         private void ResolveLocalVariableToInterpreter(Expr expr, Token name)
         {
             int scopes_size = scopes.Count;
@@ -153,6 +163,13 @@ namespace Vowel.Passes
                 }
             }
 
+        }
+
+        //this releases memory
+        //since we are done resolving all variables
+        private void CleanUp()
+        {
+            scopes.Clear();
         }
     }
 }

@@ -213,6 +213,55 @@ namespace Vowel.Runtime
             return Vowel.NIL;
         }
 
+        public object VisitLogicalExpr(Expr.Logical expr)
+        {
+            switch (expr._operator.token_type)
+            {
+                case TokenType.LOGICAL_OR:
+                    // 'or' short circuits if any of the leaves
+                    // is true
+                    // so this will only jump to the end of the function 
+                    // if the left side is false
+                    object left_evaluation = Evaluate(expr.left);
+                    if (IsTruthy(left_evaluation)) return expr.left;
+                    break;
+                case TokenType.LOGICAL_AND:
+                    // 'and' short circuits if any of the leaves
+                    // is false
+                    // so this will only jump to the end of the function 
+                    // if the left side is true
+                    // just to make sure the semantics of 'and' are true
+                    object _left_evaluation = Evaluate(expr.left);
+                    if (!IsTruthy(_left_evaluation)) return expr.left;
+                    break;
+                default:
+                    break;
+            }
+
+            return Evaluate(expr.right);
+        }
+
+        public object VisitIfStatement(Stmt.IFStatement stmt)
+        {
+            object condition_status = Evaluate(stmt.condition);
+            bool is_truthy = IsTruthy(condition_status);
+
+            if (is_truthy)
+            {
+                return Evaluate(stmt.then_branch);
+                
+            }
+
+            if(stmt.else_branch is not null)
+            {
+                return Evaluate(stmt.else_branch);
+            }
+
+            return Vowel.NIL;
+            
+        }
+
+
         //this is our bread and butt--uhhh
         private object Evaluate(Expr expression)
         {
