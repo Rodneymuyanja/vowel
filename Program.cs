@@ -21,8 +21,8 @@ namespace Vowel
 
         private static void ReadVowelSource()
         {
-            //string path = @"C:\disk_d\Programming stuff\vowel_tests\vowel_test.vowel";
-            string path = @"D:\notes2\voel.vowel";
+            string path = @"C:\disk_d\Programming stuff\vowel_tests\vowel_test.vowel";
+            //string path = @"D:\notes2\voel.vowel";
             byte [] byte_array = File.ReadAllBytes(path);
             string content = Encoding.UTF8.GetString(byte_array);
             var tokens = ScanSourceCode(content);
