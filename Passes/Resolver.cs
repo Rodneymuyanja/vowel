@@ -108,10 +108,28 @@ namespace Vowel.Passes
             }
 
             Define(stmt.identifier);
-
             return Vowel.NIL;
         }
 
+        public object VisitLogicalExpr(Expr.Logical expr)
+        {
+            Resolve(expr.left);
+            Resolve(expr.right);
+            return Vowel.NIL;
+        }
+
+        public object VisitIfStatement(Stmt.IFStatement stmt)
+        {
+            Resolve(stmt.condition);
+            Resolve(stmt.then_branch);
+
+            if (stmt.else_branch is not null)
+            {
+                Resolve(stmt.else_branch);
+            }
+
+            return Vowel.NIL;
+        }
         private void Declare(Token name)
         {
             if (scopes.Count == 0) return;
@@ -162,14 +180,22 @@ namespace Vowel.Passes
                     return;
                 }
             }
-
         }
 
         //this releases memory
         //since we are done resolving all variables
+
+        //i wonder how the gc handles the individual
+        //scope...
+        //for example a certain scope could have resolved 
+        //variables 
+        //so does doing scopes.Clear() handle the
+        //values in scope(dictionary)
+
         private void CleanUp()
         {
             scopes.Clear();
         }
+
     }
 }

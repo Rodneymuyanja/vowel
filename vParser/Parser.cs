@@ -27,6 +27,7 @@ namespace Vowel.vParser
     /// expression      -> assignment;
     /// assignment      -> IDENTIFIER "=" expression
     ///                    | logical_or;
+    /// tenary          -> expression "?"  expression ":" expression ";";
     /// logical_or      -> logical_and ( "oba" logical_and)*;
     /// logical_and     -> equality ( "oba" equality)*;
     /// equality        -> comparison (("==" | "!=" ) comparison)*;
