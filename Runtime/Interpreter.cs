@@ -270,18 +270,6 @@ namespace Vowel.Runtime
             
         }
 
-
-        //this is our bread and butt--uhhh
-        private object Evaluate(Expr expression)
-        {
-            return expression.Accept(this);
-        }
-
-        private object Evaluate(Stmt statement)
-        {
-            return statement.Accept(this);
-        }
-
         public object VisitTenaryExpr(Expr.TenaryExpr expr)
         {
             object condition = Evaluate(expr.condition);
@@ -298,12 +286,34 @@ namespace Vowel.Runtime
                 return Evaluate(expr.then_branch);
             }
 
-            if(expr.else_branch is not null)
+            if (expr.else_branch is not null)
             {
                 return Evaluate(expr.else_branch);
             }
 
             return Vowel.NIL;
         }
+
+        public object VisitWhileStatement(Stmt.WhileStatement stmt)
+        {
+            while (IsTruthy(Evaluate(stmt.condition)))
+            {
+                Evaluate(stmt.body);
+            }
+
+            return Vowel.NIL;
+        }
+
+        //this is our bread and butt--uhhh
+        private object Evaluate(Expr expression)
+        {
+            return expression.Accept(this);
+        }
+
+        private object Evaluate(Stmt statement)
+        {
+            return statement.Accept(this);
+        }
+
     }
 }

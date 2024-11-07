@@ -19,7 +19,9 @@ namespace Vowel.vParser
     /// statement       -> printStmt
     ///                    | ifstmt
     ///                    | exprStmt
+    ///                    | whileStmt
     ///                    | block;
+    /// whileStmt       -> "while" "(" expression ")" statement;
     /// exprStmt        -> expression ";";
     /// printStmt       -> "wandika" expression ";";
     /// ifstmt          -> "if" "(" expression ")" statement
@@ -104,6 +106,7 @@ namespace Vowel.vParser
             if (Match([TokenType.PRINT])) return PrintStatement();
             if (Match([TokenType.LEFT_BRACE])) return Block();
             if (Match([TokenType.IF])) return IfStatement();
+            if (Match([TokenType.WHILE])) return WhileStatement();
             return ExpressionStatement();
         }
 
@@ -138,6 +141,16 @@ namespace Vowel.vParser
             }
 
             return new Stmt.IFStatement(condition, then_branch, else_branch);
+        }
+
+        /// whileStmt       -> "while" "(" expression ")" statement;
+        private Stmt WhileStatement()
+        {
+            Consume(TokenType.LEFT_PAREN, "Expected '(' after while");
+            Expr condition = Expression();
+            Consume(TokenType.RIGHT_PAREN, "Expected ')' after while condition");
+            Stmt body = Statement();
+            return new Stmt.WhileStatement(condition, body);
         }
         private Expr Expression()
         {

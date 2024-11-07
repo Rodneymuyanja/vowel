@@ -45,7 +45,7 @@ namespace Vowel.vScanner
             keywords.Add("nze", TokenType.THIS);
             keywords.Add("true", TokenType.TRUE);
             keywords.Add("var", TokenType.VAR);
-            keywords.Add("albeit", TokenType.WHILE);
+            keywords.Add("while", TokenType.WHILE);
         }
 
         private void ScanTokens()

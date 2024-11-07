@@ -213,5 +213,12 @@ namespace Vowel.Passes
         {
             scopes.Clear();
         }
+
+        public object VisitWhileStatement(Stmt.WhileStatement stmt)
+        {
+            Resolve(stmt.condition);
+            Resolve(stmt.body);
+            return Vowel.NIL;
+        }
     }
 }
