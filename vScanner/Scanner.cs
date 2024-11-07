@@ -81,6 +81,10 @@ namespace Vowel.vScanner
                     Add(TokenType.LEFT_SQUARE);break;
                 case ']':
                     Add(TokenType.RIGHT_SQUARE);break;
+                case '?':
+                    Add(TokenType.QUESTION_MARK); break;
+                case ':':
+                    Add(TokenType.FULL_COLON); break;
                 case '=':
                     if (Match('='))
                     {

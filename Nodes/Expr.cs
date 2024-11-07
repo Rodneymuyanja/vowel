@@ -12,6 +12,7 @@ namespace Vowel.Nodes
         public T VisitVariable(Expr.Variable expr);
         public T VisitAssignStatement(Expr.AssignStatement stmt);
         public T VisitLogicalExpr(Expr.Logical expr);
+        public T VisitTenaryExpr(Expr.TenaryExpr expr);
     }
     public abstract class Expr
     {
@@ -59,7 +60,6 @@ namespace Vowel.Nodes
         public class Variable(Token _variable) : Expr
         {
             public Token variable = _variable;
-            public string runtime_identifier = "";
 
             public override T Accept<T>(IExprVisitor<T> visitor)
             {
@@ -87,6 +87,18 @@ namespace Vowel.Nodes
             public override T Accept<T>(IExprVisitor<T> visitor)
             {
                 return visitor.VisitLogicalExpr(this);
+            }
+        }
+
+        public class TenaryExpr(Expr _condition, Expr _then_branch, Expr _else_branch) : Expr
+        {
+            public Expr condition = _condition;
+            public Expr then_branch = _then_branch;
+            public Expr else_branch = _else_branch;
+
+            public override T Accept<T>(IExprVisitor<T> visitor)
+            {
+                return visitor.VisitTenaryExpr(this);
             }
         }
     }
