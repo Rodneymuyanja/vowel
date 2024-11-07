@@ -154,7 +154,16 @@ namespace Vowel.Runtime
         public object VisitPrintStatement(Stmt.PrintStatement stmt)
         {
             object expression = Evaluate(stmt.printable);
-            Console.WriteLine(expression.ToString());
+
+            if(expression is null)
+            {
+                Console.WriteLine("nil");
+            }
+            else
+            {
+                Console.WriteLine(expression!.ToString());
+            }
+
             return Vowel.NIL;
         }
 
@@ -223,7 +232,7 @@ namespace Vowel.Runtime
                     // so this will only jump to the end of the function 
                     // if the left side is false
                     object left_evaluation = Evaluate(expr.left);
-                    if (IsTruthy(left_evaluation)) return expr.left;
+                    if (IsTruthy(left_evaluation)) return left_evaluation;
                     break;
                 case TokenType.LOGICAL_AND:
                     // 'and' short circuits if any of the leaves
@@ -232,7 +241,7 @@ namespace Vowel.Runtime
                     // if the left side is true
                     // just to make sure the semantics of 'and' are true
                     object _left_evaluation = Evaluate(expr.left);
-                    if (!IsTruthy(_left_evaluation)) return expr.left;
+                    if (!IsTruthy(_left_evaluation)) return _left_evaluation;
                     break;
                 default:
                     break;
@@ -271,6 +280,30 @@ namespace Vowel.Runtime
         private object Evaluate(Stmt statement)
         {
             return statement.Accept(this);
+        }
+
+        public object VisitTenaryExpr(Expr.TenaryExpr expr)
+        {
+            object condition = Evaluate(expr.condition);
+
+            if (condition is not Boolean)
+            {
+                throw new RuntimeError("'?!' condition is expected to evaluate to boolean type");
+            }
+
+            bool is_truthy = IsTruthy(condition);
+
+            if (is_truthy)
+            {
+                return Evaluate(expr.then_branch);
+            }
+
+            if(expr.else_branch is not null)
+            {
+                return Evaluate(expr.else_branch);
+            }
+
+            return Vowel.NIL;
         }
     }
 }

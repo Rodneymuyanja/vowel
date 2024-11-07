@@ -38,7 +38,6 @@ namespace Vowel.Nodes
             public Token identifier = _identifier;
             public Expr initializer = _initializer;
             
-
             public override T Accept<T>(IStmtVisitor<T> visitor)
             {
                 return visitor.VisitVarStatement(this);

@@ -26,8 +26,8 @@ namespace Vowel.vParser
     ///                     ("else" statement);
     /// expression      -> assignment;
     /// assignment      -> IDENTIFIER "=" expression
-    ///                    | logical_or;
-    /// tenary          -> expression "?"  expression ":" expression ";";
+    ///                    | tenary;
+    /// tenary          -> logical_or "?"  expression (":" expression )? ";";
     /// logical_or      -> logical_and ( "oba" logical_and)*;
     /// logical_and     -> equality ( "oba" equality)*;
     /// equality        -> comparison (("==" | "!=" ) comparison)*;
@@ -144,11 +144,11 @@ namespace Vowel.vParser
             return Assignment();
         }
 
-        /// expression      -> IDENTIFIER "=" expression
-        ///                    | equality;
+        /// assignment      -> IDENTIFIER "=" expression
+        ///                    | tenary;
         private Expr Assignment()
         {
-            Expr expr = Oba();
+            Expr expr = Tenary();
             if (Match([TokenType.EQUAL]))
             {
                 Token equals_symbol = TrackBack();
@@ -165,12 +165,32 @@ namespace Vowel.vParser
             return expr;
         }
 
+        /// tenary          -> logical_or "?"  expression (":" expression )? ";";
+
+        private Expr Tenary()
+        {
+            Expr expr = Oba();
+            if (Match([TokenType.QUESTION_MARK]))
+            {
+                Expr then_branch = Expression();
+                Expr else_branch = null!;
+                if (Match([TokenType.FULL_COLON]))
+                {
+                    else_branch = Expression();
+                }
+
+                return new Expr.TenaryExpr(expr, then_branch, else_branch);
+            }
+
+            return expr;
+        }
+
         /// logical_and     -> equality ( "oba" equality)*; <summary>
         /// 'oba' is literally luganda for 'or'
         private Expr Oba()
         {
             Expr expr = Ne();
-            while (Match([TokenType.LOGICAL_AND]))
+            while (Match([TokenType.LOGICAL_OR]))
             {
                 Token _operator = TrackBack();
                 Expr right = Ne();
@@ -298,7 +318,7 @@ namespace Vowel.vParser
         private Expr Grouping()
         {
             Expr expr = Expression();
-            Consume(TokenType.RIGHT_BRACE, "Expected ')' after group expression");
+            Consume(TokenType.RIGHT_PAREN, "Expected ')' after group expression");
             return new Expr.GroupExpr(expr);
         }
 

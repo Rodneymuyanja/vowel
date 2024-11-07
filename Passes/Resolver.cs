@@ -182,6 +182,23 @@ namespace Vowel.Passes
             }
         }
 
+        public object VisitTenaryExpr(Expr.TenaryExpr expr)
+        {
+            Resolve(expr.condition);
+            Resolve(expr.then_branch);
+
+            if (expr.else_branch is not null) 
+            { 
+                Resolve(expr.else_branch);
+            }
+            else
+            {
+                Vowel.Warning("'?:' does not have else part defined. If the condition evaluates to 'false', the result will be implicitly nil");
+            }
+
+            return Vowel.NIL;
+        }
+
         //this releases memory
         //since we are done resolving all variables
 
@@ -196,6 +213,5 @@ namespace Vowel.Passes
         {
             scopes.Clear();
         }
-
     }
 }
