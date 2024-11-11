@@ -12,15 +12,19 @@ namespace Vowel.vParser
     ///         |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|
     /// 
     /// program         -> declaration* EOF;
-    /// block           -> "{" declaration* "}"
     /// declaration     -> varDeclaration
     ///                    |statement;
-    /// varDeclaration  -> "var" IDENTIFIER ("=" expression)? ";";
     /// statement       -> printStmt
     ///                    | ifstmt
     ///                    | exprStmt
     ///                    | whileStmt
+    ///                    | funcDecl
+    ///                    | returnStmt
     ///                    | block;
+    /// block           -> "{" declaration* "}"
+    /// varDeclaration  -> "var" IDENTIFIER ("=" expression)? ";";
+    /// funcDecl        -> IDENTIFIER ("(" parameters? ")") block ; 
+    /// returnStmt      -> "return" expression? ;
     /// whileStmt       -> "while" "(" expression ")" statement;
     /// exprStmt        -> expression ";";
     /// printStmt       -> "wandika" expression ";";
@@ -38,6 +42,9 @@ namespace Vowel.vParser
     /// factor          -> unary (("*" | "/" | "%" | "^") unary)*;
     /// unary           -> ("!"|"-") unary 
     ///                    | primary;
+    /// call            -> primary ("(" arguments* ")")?;
+    /// arguments       -> IDENTIFIER ( "," IDENTIFIER )?;
+    /// paramters       -> IDENTIFIER ( "," IDENTIFIER )?;
     /// primary         -> NUMBER | STRING | "false" | "true" | "nil"
     ///                    | IDENTIFIER | "(" expression ")";
     ///                    

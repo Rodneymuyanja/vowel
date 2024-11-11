@@ -13,6 +13,7 @@ namespace Vowel.Nodes
         public T VisitAssignStatement(Expr.AssignStatement stmt);
         public T VisitLogicalExpr(Expr.Logical expr);
         public T VisitTenaryExpr(Expr.TenaryExpr expr);
+        public T VisitCallExpr(Expr.CallExpression expr);
     }
     public abstract class Expr
     {
@@ -99,6 +100,17 @@ namespace Vowel.Nodes
             public override T Accept<T>(IExprVisitor<T> visitor)
             {
                 return visitor.VisitTenaryExpr(this);
+            }
+        }
+
+        public class CallExpression(Token _callee, List<Expr> _arguments) : Expr
+        {
+            public Token callee = _callee;
+            public List<Expr> arguments = _arguments;
+
+            public override T Accept<T>(IExprVisitor<T> visitor)
+            {
+                return visitor.VisitCallExpr(this);
             }
         }
     }

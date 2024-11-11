@@ -1,4 +1,5 @@
 ﻿
+using Vowel.Nodes;
 using Vowel.vScanner;
 
 namespace Vowel.Errors
@@ -12,5 +13,9 @@ namespace Vowel.Errors
     internal class RuntimeError(string message) : Exception
     {
         public string message = message;    
+    }
+
+    internal class Return(Expr _expression) : Exception {
+        public Expr expression = _expression;
     }
 }

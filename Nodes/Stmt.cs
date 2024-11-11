@@ -11,6 +11,7 @@ namespace Vowel.Nodes
         public T VisitBlockStatement(Stmt.BlockStatement stmt);
         public T VisitIfStatement(Stmt.IFStatement stmt);
         public T VisitWhileStatement(Stmt.WhileStatement stmt);
+        public T VisitFunctionDeclaration (Stmt.FunctionDeclaration stmt);
     }
     public abstract class Stmt
     {
@@ -73,6 +74,18 @@ namespace Vowel.Nodes
             public override T Accept<T>(IStmtVisitor<T> visitor)
             {
                 return visitor.VisitWhileStatement(this);
+            }
+        }
+
+        public class FunctionDeclaration(Token _function_name, List<Token> _parameters, BlockStatement _block) :Stmt
+        {
+            public Token token = _function_name;    
+            public List<Token> parameters = _parameters;
+            public BlockStatement block = _block;
+
+            public override T Accept<T>(IStmtVisitor<T> visitor)
+            {
+                return visitor.VisitFunctionDeclaration(this);
             }
         }
     }

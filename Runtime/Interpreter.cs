@@ -8,7 +8,7 @@ namespace Vowel.Runtime
     {
         //this is the global environment so we have no enclosing env
         //so it contains the global variables
-        private VowelEnvironment env = new (null!);
+        public VowelEnvironment env = new (null!);
         private Dictionary<Expr, Int32> local_variables = [];
         private Dictionary<string, Expr> local_vars = [];
 
@@ -200,26 +200,8 @@ namespace Vowel.Runtime
 
         public object VisitBlockStatement(Stmt.BlockStatement stmt)
         {
-            //executing a block introduces a new scope
-            //atleast according to lexical scoping
-            VowelEnvironment current_environment = new (env);
-            VowelEnvironment previous_environment = env;
-            env = current_environment;
-
-            try
-            {
-                foreach (var statement in stmt.statements)
-                {
-                    Evaluate(statement);
-                }
-            }
-            finally
-            {
-                //restore the previous environment
-                env = previous_environment;
-            }
-          
-            return Vowel.NIL;
+            VowelEnvironment current_environment = new(env);
+            return ExecuteBlock(stmt, current_environment);
         }
 
         public object VisitLogicalExpr(Expr.Logical expr)
