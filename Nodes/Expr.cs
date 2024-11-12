@@ -103,9 +103,10 @@ namespace Vowel.Nodes
             }
         }
 
-        public class CallExpression(Token _callee, List<Expr> _arguments) : Expr
+        public class CallExpression(Expr _callee,Token _paren, List<Expr> _arguments) : Expr
         {
-            public Token callee = _callee;
+            public Expr callee = _callee;
+            public Token paren = _paren;
             public List<Expr> arguments = _arguments;
 
             public override T Accept<T>(IExprVisitor<T> visitor)

@@ -220,5 +220,17 @@ namespace Vowel.Passes
             Resolve(stmt.body);
             return Vowel.NIL;
         }
+
+        public object VisitCallExpr(Expr.CallExpression expr)
+        {
+            Resolve(expr.callee);
+
+            foreach (var arg in expr.arguments)
+            {
+                Resolve(arg);
+            }
+
+            return Vowel.NIL;
+        }
     }
 }

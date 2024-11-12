@@ -77,11 +77,11 @@ namespace Vowel.Nodes
             }
         }
 
-        public class FunctionDeclaration(Token _function_name, List<Token> _parameters, BlockStatement _block) :Stmt
+        public class FunctionDeclaration(Token _function_name, List<Token> _parameters, Stmt _block) :Stmt
         {
             public Token token = _function_name;    
             public List<Token> parameters = _parameters;
-            public BlockStatement block = _block;
+            public Stmt block = _block;
 
             public override T Accept<T>(IStmtVisitor<T> visitor)
             {

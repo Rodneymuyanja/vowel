@@ -35,7 +35,7 @@ namespace Vowel.vScanner
             keywords.Add("else", TokenType.ELSE);
             keywords.Add("false", TokenType.FALSE);
             keywords.Add("for", TokenType.FOR);
-            keywords.Add("func", TokenType.FUNC);
+            keywords.Add("fn_decl", TokenType.FUNC);
             keywords.Add("if", TokenType.IF);
             keywords.Add("nil", TokenType.NIL);
             keywords.Add("oba", TokenType.LOGICAL_OR);//or

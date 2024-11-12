@@ -2,6 +2,7 @@
 using Vowel.Errors;
 using Vowel.Nodes;
 using Vowel.vScanner;
+using static Vowel.Nodes.Stmt;
 
 namespace Vowel.vParser
 {
@@ -51,7 +52,8 @@ namespace Vowel.vParser
     public class Parser(List<Token> _tokens)
     {
         private readonly List<Token> tokens = _tokens;
-        private int current = 0; 
+        private int current = 0;
+        private const int MAXIMUM_ARG_COUNT = 255;
 
         public List<Stmt> Parse()
         {
@@ -91,6 +93,8 @@ namespace Vowel.vParser
             return new Stmt.BlockStatement(statements);
         }
 
+        
+
         /// varDeclaration  -> "var" IDENTIFIER ("=" expression)? ";";
         private Stmt VarDeclaration()
         {
@@ -114,7 +118,39 @@ namespace Vowel.vParser
             if (Match([TokenType.LEFT_BRACE])) return Block();
             if (Match([TokenType.IF])) return IfStatement();
             if (Match([TokenType.WHILE])) return WhileStatement();
+            if (Match([TokenType.FUNC])) return FunctionDeclaration();
             return ExpressionStatement();
+        }
+
+        /// funcDecl        -> "fn_decl" IDENTIFIER ("(" parameters? ")") block ; 
+        private Stmt FunctionDeclaration()
+        {
+            //Token _function_name, List< Token > _parameters, BlockStatement _block
+
+            Token function_name = Consume(TokenType.IDENTIFIER, "Expected function name after 'fn_decl'.");
+
+            Consume(TokenType.LEFT_PAREN, "Expected '(' after function declaration.");
+
+            List<Token> parameters = [];
+
+            if (!Check(TokenType.RIGHT_PAREN))
+            {
+                do
+                {
+                    if(parameters.Count >= MAXIMUM_ARG_COUNT)
+                    {
+                        throw new VowelError(function_name, $"Function declaration can not have more than {MAXIMUM_ARG_COUNT} parameters");
+                    }
+                    parameters.Add(Consume(TokenType.IDENTIFIER, ""));
+                } while (Match([TokenType.COMMA]));
+            }
+           
+            Consume(TokenType.RIGHT_PAREN, "Expected ')' after parameter list.");
+            Consume(TokenType.LEFT_BRACE, "Expected '{' to start function body.");
+
+            Stmt block = Block();
+
+            return new Stmt.FunctionDeclaration(function_name, parameters, block);
         }
 
         /// exprStmt        -> expression ";";
@@ -311,6 +347,37 @@ namespace Vowel.vParser
 
             return Primary();
         }
+
+        /// call            -> primary ("(" arguments* ")")?;
+        private Expr Call()
+        {
+            //this implementation doesnt allow chaining calls like 
+            //function_name(2)(1)(4)
+
+            Expr expr = Primary();
+
+            if (Match([TokenType.LEFT_PAREN]))
+            {
+                Token call_operator = TrackBack();
+                List<Expr> arguments = [];
+
+                do
+                {
+                    if(arguments.Count >= MAXIMUM_ARG_COUNT)
+                    {
+                        throw new VowelError(call_operator, "Function call can have more than 255 arguments");
+                    }
+
+                    arguments.Add(Expression());
+                } while (Match([TokenType.COMMA]));
+
+                Consume(TokenType.RIGHT_PAREN, "Expected ')' after argument list");
+
+                return new Expr.CallExpression(expr, call_operator, arguments);
+            }
+            return expr;
+        }
+
         /// primary         -> NUMBER | STRING | "false" | "true" | "nil"
         ///                    | IDENTIFIER | "(" expression ")";
         /// 
