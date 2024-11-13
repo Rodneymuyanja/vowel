@@ -210,7 +210,8 @@ namespace Vowel.vScanner
         private static bool IsAlpha(char c)
         {
             return c >= 'a' && c <= 'z'
-                || c >= 'A' && c <= 'Z';
+                || c >= 'A' && c <= 'Z'
+                || c == '_';
         }
 
         private static bool IsAlphaSpecial(char c)

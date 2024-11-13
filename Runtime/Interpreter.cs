@@ -286,6 +286,40 @@ namespace Vowel.Runtime
             return Vowel.NIL;
         }
 
+
+        public object VisitCallExpr(Expr.CallExpression expr)
+        {
+            object callee = Evaluate(expr.callee);
+            if(callee is not Function)
+            {
+                throw new RuntimeError("Can only call functions");
+            }
+
+            Function function = (Function) callee;
+            if(expr.arguments.Count != function.Arity())
+            {
+                throw new RuntimeError($"{function.ToString()} expected '{function.Arity()}' but got {expr.arguments.Count} ");
+            }
+
+            List<object> arguments = [];
+
+            foreach (var arg in expr.arguments)
+            {
+                object evaluation = Evaluate(arg);
+                arguments.Add(evaluation);
+            }
+
+            return function.Call(this, arguments);
+        }
+
+        public object VisitFunctionDeclaration(Stmt.FunctionDeclaration stmt)
+        {
+            Function vowel_function = new (stmt, env);
+            env.Define(stmt.token.lexeme, vowel_function);
+
+            return Vowel.NIL;
+        }
+
         //this is our bread and butt--uhhh
         private object Evaluate(Expr expression)
         {

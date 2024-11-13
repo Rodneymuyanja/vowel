@@ -1,6 +1,5 @@
 ﻿
 using Vowel.Errors;
-using Vowel.Nodes;
 
 namespace Vowel.Runtime
 {
@@ -49,7 +48,17 @@ namespace Vowel.Runtime
         private VowelEnvironment AncestorEnvironment(Int32 distance)
         {
             VowelEnvironment target_env = this;
-            for (int i = 0; i < distance; i++)
+            if (distance < 0)
+            {
+                while(target_env.enclosing_env is not null)
+                {
+                    target_env = target_env.enclosing_env;
+                }
+
+                return target_env;
+            }
+
+            for (int i = 0; i <= distance; i++)
             {
                 if (target_env.enclosing_env is not null)
                 {

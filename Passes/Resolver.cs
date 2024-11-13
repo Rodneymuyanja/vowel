@@ -32,8 +32,6 @@ namespace Vowel.Passes
             
         }
 
-       
-
         public object VisitAssignStatement(Expr.AssignStatement expr)
         {
             Resolve(expr.assignment_target);
@@ -101,7 +99,7 @@ namespace Vowel.Passes
         public object VisitVarStatement(Stmt.VarStatement stmt)
         {
             Declare(stmt.identifier);
-
+           
             if (stmt.initializer is not null)
             {
                 Resolve(stmt.initializer);
@@ -176,10 +174,15 @@ namespace Vowel.Passes
                 var scope = scopes.ElementAt(i);
                 if (scope.ContainsKey(name.lexeme))
                 {
-                    vowel_interpreter.ResolveLocalVariable(expr, i);
+                    vowel_interpreter.ResolveLocalVariable(expr, i-1);
                     return;
                 }
             }
+
+            //if we dont find it in any of the nested environments
+            //then it must be in the global environment
+
+            vowel_interpreter.ResolveLocalVariable(expr, -1);
         }
 
         public object VisitTenaryExpr(Expr.TenaryExpr expr)
@@ -197,21 +200,6 @@ namespace Vowel.Passes
             }
 
             return Vowel.NIL;
-        }
-
-        //this releases memory
-        //since we are done resolving all variables
-
-        //i wonder how the gc handles the individual
-        //scope...
-        //for example a certain scope could have resolved 
-        //variables 
-        //so does doing scopes.Clear() handle the
-        //values in scope(dictionary)
-
-        private void CleanUp()
-        {
-            scopes.Clear();
         }
 
         public object VisitWhileStatement(Stmt.WhileStatement stmt)
@@ -232,5 +220,45 @@ namespace Vowel.Passes
 
             return Vowel.NIL;
         }
+
+        public object VisitFunctionDeclaration(Stmt.FunctionDeclaration stmt)
+        {
+            Declare(stmt.token);
+            Define(stmt.token);
+
+            BeginScope();
+            foreach (var parameter in stmt.parameters)
+            {
+                Declare(parameter);
+                Define(parameter);
+            }
+
+            var block = stmt.block as Stmt.BlockStatement;
+            var stmts = block!.statements;
+
+            foreach (var block_stmt in stmts)
+            {
+                Resolve(block_stmt);
+            }
+            //Resolve(stmt.block);
+            return Vowel.NIL;
+        }
+
+        //this releases memory
+        //since we are done resolving all variables
+
+        //i wonder how the gc handles the individual
+        //scope...
+        //for example a certain scope could have resolved 
+        //variables 
+        //so does doing scopes.Clear() handle the
+        //values in scope(dictionary)
+
+        private void CleanUp()
+        {
+            scopes.Clear();
+        }
+
+       
     }
 }

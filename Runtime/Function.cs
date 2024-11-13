@@ -4,9 +4,10 @@ using Vowel.Nodes;
 
 namespace Vowel.Runtime
 {
-    internal class Function(Stmt.FunctionDeclaration _function_declaration) : ICallable
+    internal class Function(Stmt.FunctionDeclaration _function_declaration, VowelEnvironment _closure) : ICallable
     {
         private Stmt.FunctionDeclaration function_declaration = _function_declaration;
+        private VowelEnvironment closure = _closure;
         public int Arity()
         {
             return function_declaration.parameters.Count;
@@ -18,7 +19,7 @@ namespace Vowel.Runtime
             //on CALLING it not declaring it
             //the arity check helps us know that we have the right number of
             //thats why its not checked here
-            VowelEnvironment _function_env = new(interpreter.env);
+            VowelEnvironment _function_env = new(closure);
             for (int i = 0; i < arguments.Count; i++)
             {
                 string parameter = function_declaration.parameters[i].lexeme;
@@ -29,7 +30,7 @@ namespace Vowel.Runtime
 
             try
             {
-                interpreter.ExecuteBlock(function_declaration.block, _function_env);
+                interpreter.ExecuteBlock((Stmt.BlockStatement)function_declaration.block, _function_env);
 
                 //this is a semantic choice
                 //returns are implemented are exceptions 
@@ -40,6 +41,11 @@ namespace Vowel.Runtime
             {
                 return r.expression;
             }
+        }
+
+        public override string ToString() 
+        {
+            return $"<fn {function_declaration.token.lexeme}>";
         }
     }
 }

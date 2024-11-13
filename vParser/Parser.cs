@@ -345,7 +345,7 @@ namespace Vowel.vParser
                 return new Expr.UnaryExpr(_operator, expr);
             }
 
-            return Primary();
+            return Call();
         }
 
         /// call            -> primary ("(" arguments* ")")?;
@@ -358,24 +358,32 @@ namespace Vowel.vParser
 
             if (Match([TokenType.LEFT_PAREN]))
             {
-                Token call_operator = TrackBack();
-                List<Expr> arguments = [];
+                return BuildCallAST(expr);
+            }
+            return expr;
+        }
 
+        private Expr BuildCallAST(Expr expr)
+        {
+            Token call_operator = TrackBack();
+            List<Expr> arguments = [];
+
+            if (!Check(TokenType.RIGHT_PAREN))
+            {
                 do
                 {
-                    if(arguments.Count >= MAXIMUM_ARG_COUNT)
+                    if (arguments.Count >= MAXIMUM_ARG_COUNT)
                     {
-                        throw new VowelError(call_operator, "Function call can have more than 255 arguments");
+                        throw new VowelError(call_operator, "Function call can not have more than 255 arguments");
                     }
 
                     arguments.Add(Expression());
                 } while (Match([TokenType.COMMA]));
-
-                Consume(TokenType.RIGHT_PAREN, "Expected ')' after argument list");
-
-                return new Expr.CallExpression(expr, call_operator, arguments);
             }
-            return expr;
+
+            Consume(TokenType.RIGHT_PAREN, "Expected ')' after argument list");
+
+            return new Expr.CallExpression(expr, call_operator, arguments);
         }
 
         /// primary         -> NUMBER | STRING | "false" | "true" | "nil"
