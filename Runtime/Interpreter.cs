@@ -12,6 +12,13 @@ namespace Vowel.Runtime
         private Dictionary<Expr, Int32> local_variables = [];
         private Dictionary<string, Expr> local_vars = [];
 
+        public Snapshot snapshot = new ();
+
+        public Dictionary<string, Snapshot> snapshot_bindings = [];
+
+
+        //private List<Dictionary<string, Expr>> frames = [];
+
         public void ResolveLocalVariable(Expr expr, Int32 scope_distance)
         {
             local_variables.Add(expr, scope_distance);
@@ -138,12 +145,22 @@ namespace Vowel.Runtime
 
         public object VisitVariable(Expr.Variable expr)
         {
-            if(local_variables.TryGetValue(expr, out int distance))
-            {
-                return env.GetVariableAt(expr.variable.lexeme, distance);
-            }
+            
+            var obj = snapshot.GetValue(expr.variable.lexeme);
 
-            return env.Get(expr.variable.lexeme);
+            //if(obj is null)
+            //{
+            //    obj = snapshot.GetValueFromSnapshot(expr.variable.lexeme);
+            //}
+
+            //if(local_variables.TryGetValue(expr, out int distance))
+            //{
+            //    return env.GetVariableAt(expr.variable.lexeme, distance);
+            //}
+
+            //return env.Get(expr.variable.lexeme);
+
+            return obj;
         }
         
         public object VisitExpressionStatement(Stmt.ExpressionStatement stmt)
@@ -173,35 +190,27 @@ namespace Vowel.Runtime
             string identifier_lexeme = stmt.identifier.lexeme;
             object initializer = Vowel.NIL;
 
-            if(stmt.initializer is not null)
+            if (stmt.initializer is not null)
             {
                 initializer = Evaluate(stmt.initializer);
             }
 
-            env.Define(identifier_lexeme, initializer);
+            //env.Define(identifier_lexeme, initializer);
+
+            snapshot.TakeSnapshot(identifier_lexeme,initializer);
             return Vowel.NIL;
         }
 
         public object VisitAssignStatement(Expr.AssignStatement expr)
         {
             object value = Evaluate(expr.assignment_target);
-
-            if(local_variables.TryGetValue(expr, out int distance))
-            {
-                env.AssignVariableAt(expr.name.lexeme,value,distance);
-            }
-            else
-            {
-                env.Assign(expr.name.lexeme, value);
-            }
-           
+            snapshot.MutateValue(expr.name.lexeme, value);
             return Vowel.NIL;
         }
 
         public object VisitBlockStatement(Stmt.BlockStatement stmt)
         {
-            VowelEnvironment current_environment = new(env);
-            return ExecuteBlock(stmt, current_environment);
+            return ExecuteBlock(stmt, snapshot);
         }
 
         public object VisitLogicalExpr(Expr.Logical expr)
@@ -298,7 +307,7 @@ namespace Vowel.Runtime
             Function function = (Function) callee;
             if(expr.arguments.Count != function.Arity())
             {
-                throw new RuntimeError($"{function.ToString()} expected '{function.Arity()}' but got {expr.arguments.Count} ");
+                throw new RuntimeError($"{function} expected '{function.Arity()}' but got {expr.arguments.Count} ");
             }
 
             List<object> arguments = [];
@@ -315,9 +324,17 @@ namespace Vowel.Runtime
         public object VisitFunctionDeclaration(Stmt.FunctionDeclaration stmt)
         {
             Function vowel_function = new (stmt, env);
-            env.Define(stmt.token.lexeme, vowel_function);
-
+            
+            snapshot.TakeSnapshot(stmt.token.lexeme, vowel_function);
+            BindSnapshot(stmt.token.lexeme);
             return Vowel.NIL;
+        }
+
+        private void BindSnapshot(string lexeme)
+        {
+            Snapshot bound_snapshot = new();
+            bound_snapshot.frames.Push(snapshot.GetFrame());
+            snapshot_bindings.Add(lexeme, bound_snapshot);
         }
 
         //this is our bread and butt--uhhh

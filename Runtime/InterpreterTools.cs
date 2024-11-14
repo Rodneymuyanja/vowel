@@ -14,6 +14,7 @@ namespace Vowel.Runtime
             VowelEnvironment previous_environment = env;
             env = current_environment;
 
+            
             try
             {
                 foreach (var statement in stmt.statements)
@@ -29,6 +30,56 @@ namespace Vowel.Runtime
 
             return Vowel.NIL;
         }
+
+        public object ExecuteBlock(Stmt.BlockStatement stmt, Snapshot current_snapshot)
+        {
+            //executing a block introduces a new scope
+            //atleast according to lexical scoping
+
+            Snapshot previous_snapshot = snapshot;
+            snapshot = current_snapshot;
+
+            try
+            {
+                foreach (var statement in stmt.statements)
+                {
+                    Evaluate(statement);
+                }
+            }
+            finally
+            {
+                //restore the previous environment
+                snapshot = previous_snapshot;
+
+            }
+
+            return Vowel.NIL;
+        }
+
+        public object ExecuteFunction(Stmt.BlockStatement stmt, Snapshot current_snapshot)
+        {
+            //executing a block introduces a new scope
+            //atleast according to lexical scoping
+
+            Snapshot previous_snapshot = snapshot;
+            snapshot = current_snapshot;
+
+            try
+            {
+                foreach (var statement in stmt.statements)
+                {
+                    Evaluate(statement);
+                }
+            }
+            finally
+            {
+                //restore the previous environment
+                snapshot = previous_snapshot;
+            }
+
+            return Vowel.NIL;
+        }
+
         private static double Power(double value, double power)
         {
             if (power == 0) return 1;

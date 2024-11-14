@@ -12,6 +12,8 @@ namespace Vowel.Passes
         private readonly Interpreter vowel_interpreter = _vowel_interpreter;
         private Dictionary<string, Expr> local_vars = [];
 
+        
+
         public void Resolve(List<Stmt> statements)
         {
             try
@@ -35,7 +37,8 @@ namespace Vowel.Passes
         public object VisitAssignStatement(Expr.AssignStatement expr)
         {
             Resolve(expr.assignment_target);
-            ResolveLocalVariableToInterpreter(expr, expr.name);
+            //ResolveLocalVariableToInterpreter(expr, expr.name);
+
             return Vowel.NIL;
         }
 
@@ -106,6 +109,10 @@ namespace Vowel.Passes
             }
 
             Define(stmt.identifier);
+
+            //TakeSnapshot(stmt.identifier.lexeme, stmt.initializer!);
+
+
             return Vowel.NIL;
         }
 
@@ -240,6 +247,9 @@ namespace Vowel.Passes
             {
                 Resolve(block_stmt);
             }
+
+
+           
             //Resolve(stmt.block);
             return Vowel.NIL;
         }

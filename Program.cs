@@ -64,12 +64,12 @@ namespace Vowel
 
             Resolver resolver = new (interpreter);
 
-            resolver.Resolve(statements);
+            //resolver.Resolve(statements);
 
-            if (had_error)
-            {
-                Environment.Exit(0);
-            }
+            //if (had_error)
+            //{
+            //    Environment.Exit(0);
+            //}
 
             interpreter.Interpret(statements);
         }
