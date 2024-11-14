@@ -1,7 +1,6 @@
 ﻿
 using System.Text;
 using Vowel.Nodes;
-using Vowel.Passes;
 using Vowel.Runtime;
 using Vowel.vParser;
 using Vowel.vScanner;
@@ -21,8 +20,8 @@ namespace Vowel
 
         private static void ReadVowelSource()
         {
-            //string path = @"C:\disk_d\Programming stuff\vowel_tests\vowel_test.vowel";
-            string path = @"D:\notes2\voel.vowel";
+            string path = @"C:\disk_d\Programming stuff\vowel_tests\vowel_test.vowel";
+            //string path = @"D:\notes2\voel.vowel";
             byte [] byte_array = File.ReadAllBytes(path);
             string content = Encoding.UTF8.GetString(byte_array);
             var tokens = ScanSourceCode(content);
@@ -61,16 +60,6 @@ namespace Vowel
         private static void Interpret(List<Stmt> statements)
         {
             Interpreter interpreter = new ();
-
-            Resolver resolver = new (interpreter);
-
-            //resolver.Resolve(statements);
-
-            //if (had_error)
-            //{
-            //    Environment.Exit(0);
-            //}
-
             interpreter.Interpret(statements);
         }
 
