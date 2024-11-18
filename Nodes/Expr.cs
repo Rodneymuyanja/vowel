@@ -128,11 +128,11 @@ namespace Vowel.Nodes
             }
         }
 
-        public class SetExpression(Expr _obj, Token _identifier, object _value)  :Expr
+        public class SetExpression(Expr _obj, Token _identifier, Expr _value)  :Expr
         {
             public Expr target = _obj;
             public Token identifier = _identifier;
-            public object value = _value;
+            public Expr value = _value;
 
             public override T Accept<T>(IExprVisitor<T> visitor)
             {

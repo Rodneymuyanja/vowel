@@ -330,8 +330,9 @@ namespace Vowel.Runtime
             //the state(field) we're trying to set
             VowelInstance instance = (VowelInstance)target;
             //on that instance is where we plug that value
-            instance.Set(expr.identifier.lexeme, expr.value);
-            return Vowel.NIL;
+            object value = Evaluate(expr.value);
+            instance.Set(expr.identifier.lexeme, value);
+            return value;
         }
 
         public object VisitGetExpr(Expr.GetExpression expr)

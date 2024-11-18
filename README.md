@@ -19,3 +19,20 @@ For example
 	wandika c; // this will yield 'nil'
 
 The interpreter will issue a warning, indicating to the user about what's about to happen
+
+##
+Regarding overloaded functions, the implemetation still has a bug, 
+
+For example
+	
+	fn_decl one(){
+		wandika "one";
+	}
+
+	fn_decl one(k){
+		one();
+		wandika "one one";
+	}_
+
+In the above example due to the implementation using snapshots, shadowing causes one() to be shadowed by one(k),
+in the function FindFunction() on the snapshot, the first function will not be found
