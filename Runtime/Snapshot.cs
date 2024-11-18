@@ -5,9 +5,16 @@ namespace Vowel.Runtime
 {
     public class Snapshot
     {
-        public Stack<Dictionary<string, object>> frames = [];
+        public Stack<IDictionary<string, object>> frames = [];
+        public List<Function> functions = [];
         public void TakeSnapshot(string lexeme, object obj)
         {
+            if (obj is Function function)
+            {
+                CheckForDuplicateFunction(function);
+                functions.Add(function);
+            }
+
             if (frames.Count == 0)
             {
                 Dictionary<string, object> snapshot = [];
@@ -28,6 +35,20 @@ namespace Vowel.Runtime
             frames.Push(frame);
         }
 
+        private void CheckForDuplicateFunction(Function function)
+        {
+            var overload = FindFunction(function.Arity());
+
+            if (overload is not null)
+            {
+                throw new RuntimeError($"The member {function} was already defined");
+            }
+        }
+
+        public Function FindFunction(int arity)
+        {
+            return functions.Where(f => f.Arity() == arity).FirstOrDefault()!;
+        }
         public object GetValue(string lexeme)
         {
             var snapshot = GetFrame();
@@ -50,7 +71,7 @@ namespace Vowel.Runtime
 
         public Dictionary<string, object> GetFrame()
         {
-            return frames.Peek();
+            return (Dictionary<string, object>)frames.Peek();
         }
 
         public void PopFrame()

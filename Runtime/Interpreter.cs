@@ -8,26 +8,9 @@ namespace Vowel.Runtime
     {
         //this is the global environment so we have no enclosing env
         //so it contains the global variables
-        public VowelEnvironment env = new (null!);
-        private Dictionary<Expr, Int32> local_variables = [];
-        private Dictionary<string, Expr> local_vars = [];
-
         public Snapshot snapshot = new ();
-
         public Dictionary<string, Snapshot> snapshot_bindings = [];
 
-
-        //private List<Dictionary<string, Expr>> frames = [];
-
-        public void ResolveLocalVariable(Expr expr, Int32 scope_distance)
-        {
-            local_variables.Add(expr, scope_distance);
-        }
-
-        public void ResolveLocalVariable(string identifier, Expr expr)
-        {
-            local_vars.Add(identifier,expr);
-        }
         public void Interpret(List<Stmt> statements) 
         {
             try
@@ -37,7 +20,7 @@ namespace Vowel.Runtime
                     Evaluate(statement);
                 }
             }
-            catch (RuntimeError)
+            catch (RuntimeError r)
             {
                 throw;
             }
@@ -145,20 +128,7 @@ namespace Vowel.Runtime
 
         public object VisitVariable(Expr.Variable expr)
         {
-            
             var obj = snapshot.GetValue(expr.variable.lexeme);
-
-            //if(obj is null)
-            //{
-            //    obj = snapshot.GetValueFromSnapshot(expr.variable.lexeme);
-            //}
-
-            //if(local_variables.TryGetValue(expr, out int distance))
-            //{
-            //    return env.GetVariableAt(expr.variable.lexeme, distance);
-            //}
-
-            //return env.Get(expr.variable.lexeme);
 
             return obj;
         }
@@ -185,6 +155,8 @@ namespace Vowel.Runtime
         }
 
         //this a variable declaration
+        //every variable declaration causes
+        //causes a split in the environment
         public object VisitVarStatement(Stmt.VarStatement stmt)
         {
             string identifier_lexeme = stmt.identifier.lexeme;
@@ -195,12 +167,11 @@ namespace Vowel.Runtime
                 initializer = Evaluate(stmt.initializer);
             }
 
-            //env.Define(identifier_lexeme, initializer);
-
             snapshot.TakeSnapshot(identifier_lexeme,initializer);
             return Vowel.NIL;
         }
 
+        //variable assignment causes a mutation
         public object VisitAssignStatement(Expr.AssignStatement expr)
         {
             object value = Evaluate(expr.assignment_target);
@@ -258,7 +229,6 @@ namespace Vowel.Runtime
             }
 
             return Vowel.NIL;
-            
         }
 
         public object VisitTenaryExpr(Expr.TenaryExpr expr)
@@ -295,7 +265,6 @@ namespace Vowel.Runtime
             return Vowel.NIL;
         }
 
-
         public object VisitCallExpr(Expr.CallExpression expr)
         {
             object callee = Evaluate(expr.callee);
@@ -307,7 +276,7 @@ namespace Vowel.Runtime
             Function function = (Function) callee;
             if(expr.arguments.Count != function.Arity())
             {
-                throw new RuntimeError($"{function} expected '{function.Arity()}' but got {expr.arguments.Count} ");
+                function = FindOverLoad(expr, function);
             }
 
             List<object> arguments = [];
@@ -321,12 +290,22 @@ namespace Vowel.Runtime
             return function.Call(this, arguments);
         }
 
+        private Function FindOverLoad(Expr.CallExpression expr, Function function)
+        {
+            var overload = snapshot.FindFunction(expr.arguments.Count);
+
+            return overload is null
+                ? throw new RuntimeError($"No overload of {function.function_declaration.token.lexeme} takes {expr.arguments.Count} argument(s), found " +
+                    $"{function} but expects {function.Arity()} argument(s)")
+                : overload;
+        }
+
         public object VisitFunctionDeclaration(Stmt.FunctionDeclaration stmt)
         {
-            Function vowel_function = new (stmt, env);
-            
+            Function vowel_function = new (stmt);
+            string function_runtime_name = $"{stmt.token.lexeme}${vowel_function.Arity()}";
             snapshot.TakeSnapshot(stmt.token.lexeme, vowel_function);
-            BindSnapshot(stmt.token.lexeme);
+            BindSnapshot(function_runtime_name);
             return Vowel.NIL;
         }
 
@@ -367,6 +346,10 @@ namespace Vowel.Runtime
             return instance.Get(expr.identifier.lexeme);
         }
 
+        //binding a snapshot refers to attatching 
+        //a lexeme to the current snapshot
+        //that data structures like functions 
+        //are bound to the currently active environment
         private void BindSnapshot(string lexeme)
         {
             Snapshot bound_snapshot = new();

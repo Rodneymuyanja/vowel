@@ -4,10 +4,9 @@ using Vowel.Nodes;
 
 namespace Vowel.Runtime
 {
-    internal class Function(Stmt.FunctionDeclaration _function_declaration, VowelEnvironment _closure) : ICallable
+    public class Function(Stmt.FunctionDeclaration _function_declaration) : ICallable
     {
-        private Stmt.FunctionDeclaration function_declaration = _function_declaration;
-        private VowelEnvironment closure = _closure;
+        public readonly Stmt.FunctionDeclaration function_declaration = _function_declaration;
         public int Arity()
         {
             return function_declaration.parameters.Count;
@@ -22,7 +21,8 @@ namespace Vowel.Runtime
             //we create new snapshots
 
             //this approach comes in handy when we have a recursive function
-            Snapshot snapshot = interpreter.snapshot_bindings[function_declaration.token.lexeme];
+            string function_key = $"{function_declaration.token.lexeme}${Arity()}";
+            Snapshot snapshot = interpreter.snapshot_bindings[function_key];
             for (int i = 0; i < arguments.Count; i++)
             {
                 string parameter = function_declaration.parameters[i].lexeme;
@@ -33,9 +33,8 @@ namespace Vowel.Runtime
 
             try
             {
-                interpreter.ExecuteFunction((Stmt.BlockStatement)function_declaration.block, snapshot);
+                interpreter.ExecuteBlock((Stmt.BlockStatement)function_declaration.block, snapshot);
 
-               
                 //this is a semantic choice
                 //returns are implemented are exceptions 
                 //so if no return is found then we implicitly return a nil
@@ -51,9 +50,8 @@ namespace Vowel.Runtime
 
         public override string ToString() 
         {
-            return $"<fn {function_declaration.token.lexeme}>";
+            return $"<fn {function_declaration.token.lexeme} {Arity()}>";
         }
-
 
         //when function is done executing, we can remove the argument frames
         private static void RestoreSnapShot(Snapshot snapshot, int arg_count)

@@ -6,61 +6,10 @@ namespace Vowel.Runtime
 {
     public partial class Interpreter
     {
-        public object ExecuteBlock(Stmt.BlockStatement stmt, VowelEnvironment current_environment) 
-        {
-            //executing a block introduces a new scope
-            //atleast according to lexical scoping
-            
-            VowelEnvironment previous_environment = env;
-            env = current_environment;
-
-            
-            try
-            {
-                foreach (var statement in stmt.statements)
-                {
-                    Evaluate(statement);
-                }
-            }
-            finally
-            {
-                //restore the previous environment
-                env = previous_environment;
-            }
-
-            return Vowel.NIL;
-        }
-
+        //executing a block introduces a new scope
+        //atleast according to lexical scoping
         public object ExecuteBlock(Stmt.BlockStatement stmt, Snapshot current_snapshot)
         {
-            //executing a block introduces a new scope
-            //atleast according to lexical scoping
-
-            Snapshot previous_snapshot = snapshot;
-            snapshot = current_snapshot;
-
-            try
-            {
-                foreach (var statement in stmt.statements)
-                {
-                    Evaluate(statement);
-                }
-            }
-            finally
-            {
-                //restore the previous environment
-                snapshot = previous_snapshot;
-
-            }
-
-            return Vowel.NIL;
-        }
-
-        public object ExecuteFunction(Stmt.BlockStatement stmt, Snapshot current_snapshot)
-        {
-            //executing a block introduces a new scope
-            //atleast according to lexical scoping
-
             Snapshot previous_snapshot = snapshot;
             snapshot = current_snapshot;
 
