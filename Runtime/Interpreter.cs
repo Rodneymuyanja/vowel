@@ -330,6 +330,43 @@ namespace Vowel.Runtime
             return Vowel.NIL;
         }
 
+        public object VisitClassStatement(Stmt.ClassStatement stmt)
+        {
+            VowelClass vowel_class = new (stmt);
+            snapshot.TakeSnapshot(stmt.token.lexeme, vowel_class);
+            BindSnapshot(stmt.token.lexeme);
+            return vowel_class;
+        }
+
+        public object VisitSetExpr(Expr.SetExpression expr)
+        {
+            object target = Evaluate(expr.target);
+
+            if(target is not VowelInstance)
+            {
+                throw new RuntimeError($"Set target should be an object instance {target} is not an instance.");
+            }
+
+            //notice the reaosn we the target is because it has
+            //the state(field) we're trying to set
+            VowelInstance instance = (VowelInstance)target;
+            //on that instance is where we plug that value
+            instance.Set(expr.identifier.lexeme, expr.value);
+            return Vowel.NIL;
+        }
+
+        public object VisitGetExpr(Expr.GetExpression expr)
+        {
+            object source = Evaluate(expr);
+            if(source is not VowelInstance)
+            {
+                throw new RuntimeError($"Only instances have properties that can be accessed via get-expressions, '{source}' is not an object instance.");
+            }
+
+            VowelInstance instance = (VowelInstance)source;
+            return instance.Get(expr.identifier.lexeme);
+        }
+
         private void BindSnapshot(string lexeme)
         {
             Snapshot bound_snapshot = new();
@@ -347,6 +384,5 @@ namespace Vowel.Runtime
         {
             return statement.Accept(this);
         }
-
     }
 }

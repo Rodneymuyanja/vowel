@@ -14,6 +14,8 @@ namespace Vowel.Nodes
         public T VisitLogicalExpr(Expr.Logical expr);
         public T VisitTenaryExpr(Expr.TenaryExpr expr);
         public T VisitCallExpr(Expr.CallExpression expr);
+        public T VisitGetExpr(Expr.GetExpression expr);
+        public T VisitSetExpr(Expr.SetExpression expr);
     }
     public abstract class Expr
     {
@@ -112,6 +114,29 @@ namespace Vowel.Nodes
             public override T Accept<T>(IExprVisitor<T> visitor)
             {
                 return visitor.VisitCallExpr(this);
+            }
+        }
+
+        public class GetExpression(Expr _source, Token _identifier) : Expr
+        {
+            public Expr source = _source;
+            public Token identifier = _identifier;
+
+            public override T Accept<T>(IExprVisitor<T> visitor)
+            {
+                return visitor.VisitGetExpr(this);
+            }
+        }
+
+        public class SetExpression(Expr _obj, Token _identifier, object _value)  :Expr
+        {
+            public Expr target = _obj;
+            public Token identifier = _identifier;
+            public object value = _value;
+
+            public override T Accept<T>(IExprVisitor<T> visitor)
+            {
+                return visitor.VisitSetExpr(this);
             }
         }
     }

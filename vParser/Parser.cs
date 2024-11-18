@@ -1,4 +1,5 @@
 ﻿
+using System.Security.Cryptography.X509Certificates;
 using Vowel.Errors;
 using Vowel.Nodes;
 using Vowel.vScanner;
@@ -21,18 +22,22 @@ namespace Vowel.vParser
     ///                    | whileStmt
     ///                    | funcDecl
     ///                    | returnStmt
+    ///                    | classStmt
     ///                    | block;
     /// block           -> "{" declaration* "}"
     /// varDeclaration  -> "var" IDENTIFIER ("=" expression)? ";";
-    /// funcDecl        -> IDENTIFIER ("(" parameters? ")") block ; 
+    /// classStmt       -> "class" IDENTIFIER "{" ( function )* "}";
+    /// funcDecl        -> "fun" function
+    /// function        ->  IDENTIFIER ("(" parameters? ")") block ; 
     /// returnStmt      -> "return" expression? ;
     /// whileStmt       -> "while" "(" expression ")" statement;
     /// exprStmt        -> expression ";";
     /// printStmt       -> "wandika" expression ";";
     /// ifstmt          -> "if" "(" expression ")" statement
     ///                     ("else" statement);
+    ///                     
     /// expression      -> assignment;
-    /// assignment      -> IDENTIFIER "=" expression
+    /// assignment      -> ( call ".") ? IDENTIFIER "=" expression
     ///                    | tenary;
     /// tenary          -> logical_or "?"  expression (":" expression )? ";";
     /// logical_or      -> logical_and ( "oba" logical_and)*;
@@ -43,7 +48,7 @@ namespace Vowel.vParser
     /// factor          -> unary (("*" | "/" | "%" | "^") unary)*;
     /// unary           -> ("!"|"-") unary 
     ///                    | primary;
-    /// call            -> primary ("(" arguments* ")")?;
+    /// call            -> primary ("(" arguments? ")"| "." IDENTIFIER)* ";";
     /// arguments       -> IDENTIFIER ( "," IDENTIFIER )?;
     /// paramters       -> IDENTIFIER ( "," IDENTIFIER )?;
     /// primary         -> NUMBER | STRING | "false" | "true" | "nil"
@@ -118,16 +123,30 @@ namespace Vowel.vParser
             if (Match([TokenType.LEFT_BRACE])) return Block();
             if (Match([TokenType.IF])) return IfStatement();
             if (Match([TokenType.WHILE])) return WhileStatement();
-            if (Match([TokenType.FUNC])) return FunctionDeclaration();
+            if (Match([TokenType.FUNC])) return FunctionDeclaration("function");
+            if (Match([TokenType.CLASS])) return ClassStatement();
             return ExpressionStatement();
         }
 
-        /// funcDecl        -> "fn_decl" IDENTIFIER ("(" parameters? ")") block ; 
-        private Stmt FunctionDeclaration()
+        /// classStmt       -> "class" IDENTIFIER "{" ( function )* "}";
+        private Stmt ClassStatement()
         {
-            //Token _function_name, List< Token > _parameters, BlockStatement _block
+            Token class_name = Consume(TokenType.IDENTIFIER, "Expected class name after 'class' keyword");
+            Consume(TokenType.LEFT_BRACE, "Expected '{' after class name");
+            List<Stmt> methods = [];
 
-            Token function_name = Consume(TokenType.IDENTIFIER, "Expected function name after 'fn_decl'.");
+            while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
+            {
+                methods.Add(FunctionDeclaration("method"));
+            }
+
+            Consume(TokenType.RIGHT_BRACE,"Expected '}' after class declaration");
+            return new Stmt.ClassStatement(class_name, methods);
+        }
+        /// funcDecl        -> "fn_decl" IDENTIFIER ("(" parameters? ")") block ; 
+        private Stmt FunctionDeclaration(string function_type)
+        {
+            Token function_name = Consume(TokenType.IDENTIFIER, $"Expected function name after {function_type} declaration.");
 
             Consume(TokenType.LEFT_PAREN, "Expected '(' after function declaration.");
 
@@ -200,7 +219,7 @@ namespace Vowel.vParser
             return Assignment();
         }
 
-        /// assignment      -> IDENTIFIER "=" expression
+        /// assignment      ->(call ".")? IDENTIFIER "=" expression
         ///                    | tenary;
         private Expr Assignment()
         {
@@ -215,7 +234,12 @@ namespace Vowel.vParser
                     return new Expr.AssignStatement(target, value);
                 }
 
-                throw new VowelError(equals_symbol, "Token requires target to be a variable");
+                if(expr is Expr.GetExpression get)
+                {
+                    return new Expr.SetExpression(get.source,get.identifier, value);
+                }
+
+                throw new VowelError(equals_symbol, "Assignment requires the target [l_value] to be a variable");
             }
 
             return expr;
@@ -379,6 +403,11 @@ namespace Vowel.vParser
 
                     arguments.Add(Expression());
                 } while (Match([TokenType.COMMA]));
+            }
+            else if (Match([TokenType.DOT]))
+            {
+                Token identifier = Consume(TokenType.IDENTIFIER, "Expected identifier on get expression");
+                return new Expr.GetExpression(expr, identifier);
             }
 
             Consume(TokenType.RIGHT_PAREN, "Expected ')' after argument list");

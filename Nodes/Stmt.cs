@@ -12,6 +12,7 @@ namespace Vowel.Nodes
         public T VisitIfStatement(Stmt.IFStatement stmt);
         public T VisitWhileStatement(Stmt.WhileStatement stmt);
         public T VisitFunctionDeclaration (Stmt.FunctionDeclaration stmt);
+        public T VisitClassStatement (Stmt.ClassStatement stmt);
     }
     public abstract class Stmt
     {
@@ -86,6 +87,17 @@ namespace Vowel.Nodes
             public override T Accept<T>(IStmtVisitor<T> visitor)
             {
                 return visitor.VisitFunctionDeclaration(this);
+            }
+        }
+
+        public class ClassStatement(Token _class_name, List<Stmt> _methods) : Stmt
+        {
+            public Token token = _class_name;
+            public List<Stmt> methods = _methods;
+
+            public override T Accept<T>(IStmtVisitor<T> visitor)
+            {
+               return visitor.VisitClassStatement(this);
             }
         }
     }
